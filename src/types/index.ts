@@ -1,37 +1,40 @@
-import { ExperienceLevel } from "@/lib/schema";
+// src/types/index.ts
+export interface SkillProficiency {
+  skill: string;
+  proficiency: "beginner" | "intermediate" | "advanced" | "expert";
+}
 
-export interface Candidate {
+export interface CandidateData {
   id: number;
-  name: string | null;
+  name: string;
   email: string | null;
   phone: string | null;
-  resumeUrl: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  resumeText: string;
+  createdAt: string;
 }
 
-export interface Skill {
-  skill: string;
-  proficiency: number; // 1-5 scale
-}
-
-export interface AnalysisResult {
+export interface AnalysisData {
   id: number;
   candidateId: number;
-  skills: Skill[];
-  experienceLevel: ExperienceLevel;
-  yearsOfExperience: number;
-  rawAnalysis: Record<string, any>;
-  createdAt: Date;
-  updatedAt: Date;
+  skills: SkillProficiency[];
+  experienceLevel: "fresher" | "junior" | "mediocre" | "senior";
+  workExperienceYears: string;
+  summary: string;
+  createdAt: string;
 }
 
-export interface ResumeAnalysisResponse {
-  skills: { skill: string; proficiency: number }[];
-  experienceLevel: ExperienceLevel; // Updated to match the expected type
-  yearsOfExperience: number;
-  candidateName?: string; // Add this property
-  candidateEmail?: string; // Add this property
-  candidatePhone?: string; // Add this property
-  rawAnalysis: Record<string, any>;
+export interface CandidateWithAnalysis {
+  candidate: CandidateData;
+  analysis?: AnalysisData;
+}
+
+export interface ResumeAnalysisResult {
+  name: string;
+  email?: string;
+  phone?: string;
+  skills: SkillProficiency[];
+  experienceYears: number;
+  experienceLevel: "fresher" | "junior" | "mediocre" | "senior";
+  summary: string;
+  rawText: string;
 }

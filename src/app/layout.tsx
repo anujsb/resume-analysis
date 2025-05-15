@@ -33,6 +33,7 @@
 //   );
 // }
 // src/app/layout.tsx
+// src/app/layout.tsx
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -41,7 +42,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Resume Analyzer for Recruiters",
-  description: "AI-powered tool to analyze candidate resumes for skills and experience levels",
+  description: "AI-powered resume analysis tool for recruiters",
 };
 
 export default function RootLayout({
@@ -51,7 +52,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <main>{children}</main>
+      </body>
     </html>
   );
 }
