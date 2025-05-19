@@ -20,6 +20,10 @@ import {
   BookOpen,
   FileText
 } from "lucide-react";
+import { RequirementMatch } from "./requirement-match";
+import { JobRequirement } from "@/types/job-requirements";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 interface SkillProficiency {
   skill: string;
@@ -40,10 +44,20 @@ interface AnalysisResultProps {
     workExperienceYears: string;
     summary: string;
   };
+  jobRequirement?: JobRequirement | null;
+  savedRequirements?: JobRequirement[]; // Add this prop
 }
 
-export function AnalysisResult({ candidate, analysis }: AnalysisResultProps) {
+export function AnalysisResult({ 
+  candidate, 
+  analysis, 
+  jobRequirement,
+  savedRequirements = [] // Provide default empty array
+}: AnalysisResultProps) {
   const [showFullText, setShowFullText] = useState(false);
+  const [selectedRequirement, setSelectedRequirement] = useState<JobRequirement | null>(
+    jobRequirement || null
+  );
 
   const proficiencyColor = {
     beginner: "bg-slate-100 text-slate-800",
@@ -65,90 +79,162 @@ export function AnalysisResult({ candidate, analysis }: AnalysisResultProps) {
   );
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="text-2xl flex items-center gap-2">
-          <User className="h-5 w-5" /> {candidate.name}
-        </CardTitle>
-        <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
-          <ExperienceLevelBadge 
-            level={analysis.experienceLevel} 
-            years={analysis.workExperienceYears} 
-          />
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <User className="h-6 w-6" /> {candidate.name}
+          </h1>
+          <div className="flex items-center gap-2 mt-2">
+            <ExperienceLevelBadge 
+              level={analysis.experienceLevel} 
+              years={analysis.workExperienceYears} 
+            />
+            {candidate.email && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <Mail className="h-3 w-3" />
+                {candidate.email}
+              </Badge>
+            )}
+            {candidate.phone && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <Phone className="h-3 w-3" />
+                {candidate.phone}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
 
-          {candidate.email && (
-            <span className="flex items-center gap-1 text-sm">
-              <Mail className="h-4 w-4" />
-              {candidate.email}
-            </span>
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="w-full">
+          <TabsTrigger value="overview" className="flex-1">Overview</TabsTrigger>
+          <TabsTrigger value="comparison" className="flex-1">Requirements Match</TabsTrigger>
+          <TabsTrigger value="details" className="flex-1">Full Details</TabsTrigger>
+        </TabsList>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="mt-4 space-y-6">
+          {selectedRequirement && (
+            <RequirementMatch
+              jobRequirement={selectedRequirement}
+              candidateSkills={analysis.skills}
+              candidateExperienceYears={analysis.workExperienceYears}
+            />
           )}
-          
-          {candidate.phone && (
-            <span className="flex items-center gap-1 text-sm">
-              <Phone className="h-4 w-4" />
-              {candidate.phone}
-            </span>
-          )}
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent>
-        <Tabs defaultValue="summary" className="w-full">
-          <TabsList className="w-full">
-            <TabsTrigger value="summary" className="flex-1">Summary</TabsTrigger>
-            <TabsTrigger value="skills" className="flex-1">Skills</TabsTrigger>
-            <TabsTrigger value="resume" className="flex-1">Resume Text</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="summary" className="mt-4">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-lg font-medium">
-                <BookOpen className="h-5 w-5" />
-                Candidate Summary
-              </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Professional Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
               <p className="text-gray-700">{analysis.summary}</p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="skills" className="mt-4">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-lg font-medium">
-                Skills & Proficiency
-              </div>
-              
-              <div className="space-y-4">
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Comparison Tab */}
+        <TabsContent value="comparison" className="mt-4 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Compare Against Requirements</CardTitle>
+              <CardDescription>
+                Select a job requirement to compare against
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Select 
+                value={selectedRequirement?.id?.toString() || ""} 
+                onValueChange={(value: string) => {
+                  const req = savedRequirements.find(r => r.id?.toString() === value);
+                  if (req) setSelectedRequirement(req);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a job requirement" />
+                </SelectTrigger>
+                <SelectContent>
+                  {savedRequirements.map((req: JobRequirement) => (
+                    <SelectItem 
+                      key={req.id?.toString()} 
+                      value={req.id?.toString() || ""}
+                    >
+                      {req.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {selectedRequirement && (
+                <div className="mt-6 space-y-6">
+                  <RequirementMatch
+                    jobRequirement={selectedRequirement}
+                    candidateSkills={analysis.skills}
+                    candidateExperienceYears={analysis.workExperienceYears}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Details Tab */}
+        <TabsContent value="details" className="mt-4 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Skills Breakdown</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
                 {["expert", "advanced", "intermediate", "beginner"].map((level) => (
                   groupedSkills[level] && groupedSkills[level].length > 0 && (
                     <div key={level} className="space-y-2">
-                      <h4 className="font-medium capitalize">{level}</h4>
+                      <h4 className="font-medium capitalize flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${
+                          level === 'expert' ? 'bg-purple-500' :
+                          level === 'advanced' ? 'bg-green-500' :
+                          level === 'intermediate' ? 'bg-blue-500' :
+                          'bg-gray-500'
+                        }`} />
+                        {level}
+                      </h4>
                       <div className="flex flex-wrap gap-2">
                         {groupedSkills[level].map((skill, index) => (
-                          <span 
-                            key={index} 
-                            className={`px-2 py-1 rounded-md text-xs font-medium ${proficiencyColor[skill.proficiency]}`}
+                          <Badge 
+                            key={index}
+                            variant={
+                              level === 'expert' ? 'default' :
+                              level === 'advanced' ? 'secondary' :
+                              'outline'
+                            }
                           >
                             {skill.skill}
-                          </span>
+                          </Badge>
                         ))}
                       </div>
                     </div>
                   )
                 ))}
               </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="resume" className="mt-4">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-lg font-medium">
-                  <FileText className="h-5 w-5" />
-                  Resume Text
-                </div>
-                
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Full Resume Text</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="relative">
+                <pre className={`whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg ${
+                  !showFullText ? "max-h-40 overflow-hidden" : ""
+                }`}>
+                  {candidate.resumeText}
+                </pre>
+                {!showFullText && (
+                  <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent" />
+                )}
                 <button
                   onClick={() => setShowFullText(!showFullText)}
-                  className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+                  className="mt-2 text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
                 >
                   {showFullText ? (
                     <>
@@ -163,16 +249,10 @@ export function AnalysisResult({ candidate, analysis }: AnalysisResultProps) {
                   )}
                 </button>
               </div>
-              
-              <div className="bg-gray-50 p-4 rounded-md">
-                <pre className={`whitespace-pre-wrap text-sm ${!showFullText ? "max-h-40 overflow-hidden" : ""}`}>
-                  {candidate.resumeText}
-                </pre>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

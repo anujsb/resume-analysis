@@ -1,62 +1,3 @@
-// // src/lib/gemini.ts
-// import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// // Types for analysis results
-// export interface SkillProficiency {
-//   skill: string;
-//   proficiency: "beginner" | "intermediate" | "advanced" | "expert";
-// }
-
-// export interface ResumeAnalysis {
-//   name: string;
-//   email?: string;
-//   phone?: string;
-//   skills: SkillProficiency[];
-//   experienceYears: number;
-//   experienceLevel: "fresher" | "junior" | "mediocre" | "senior";
-//   summary: string;
-//   rawText: string;
-// }
-
-// // Initialize Gemini AI
-// export function getGeminiClient() {
-//   const apiKey = process.env.GEMINI_API_KEY;
-  
-//   if (!apiKey) {
-//     throw new Error("Gemini API key is missing. Please check your .env.local file.");
-//   }
-  
-//   return new GoogleGenerativeAI(apiKey);
-// }
-
-// export async function analyzeResume(text: string, fileName: string): Promise<ResumeAnalysis> {
-//   try {
-//     const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//         Authorization: `Bearer ${process.env.GEMINI_API_KEY}`,
-//       },
-//       body: JSON.stringify({ text, fileName }),
-//     });
-
-//     const responseText = await response.text();
-//     console.log("Raw Gemini API Response:", responseText);
-
-//     try {
-//       const parsedResponse = JSON.parse(responseText);
-//       return parsedResponse;
-//     } catch (error) {
-//       console.error("Failed to parse Gemini response as JSON:", responseText);
-//       throw new Error("Failed to parse resume analysis result");
-//     }
-//   } catch (error) {
-//     console.error("Error analyzing resume:", error);
-//     throw new Error(`Failed to analyze resume: ${error instanceof Error ? error.message : "Unknown error"}`);
-//   }
-// }
-
-
 // src/lib/gemini.ts
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -75,6 +16,27 @@ export interface ResumeAnalysis {
   experienceLevel: "fresher" | "junior" | "mediocre" | "senior";
   summary: string;
   rawText: string;
+}
+
+export interface JobRequirement {
+  requiredSkills: string[];
+  minimumExperience: number;
+  preferredExperience: number;
+}
+
+export interface SkillMatch {
+  skill: string;
+  matched: boolean;
+  proficiencyInResume?: "beginner" | "intermediate" | "advanced" | "expert";
+}
+
+export interface RequirementMatchResult {
+  overallMatch: number;
+  matchedSkills: SkillMatch[];
+  experienceMatch: {
+    matches: boolean;
+    description: string;
+  };
 }
 
 // Initialize Gemini AI
@@ -151,4 +113,39 @@ export async function analyzeResume(text: string, fileName: string): Promise<Res
     console.error("Error analyzing resume:", error);
     throw new Error(`Failed to analyze resume: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
+}
+
+export async function matchRequirements(
+  analysis: ResumeAnalysis,
+  requirements: JobRequirement
+): Promise<RequirementMatchResult> {
+  const matchedSkills: SkillMatch[] = requirements.requiredSkills.map(reqSkill => {
+    const foundSkill = analysis.skills.find(
+      s => s.skill.toLowerCase().includes(reqSkill.toLowerCase())
+    );
+    
+    return {
+      skill: reqSkill,
+      matched: !!foundSkill,
+      proficiencyInResume: foundSkill?.proficiency
+    };
+  });
+
+  const matchPercentage = (matchedSkills.filter(s => s.matched).length / requirements.requiredSkills.length) * 100;
+
+  const experienceYears = analysis.experienceYears;
+  const experienceMatch = {
+    matches: experienceYears >= requirements.minimumExperience,
+    description: experienceYears >= requirements.preferredExperience
+      ? "Exceeds required experience"
+      : experienceYears >= requirements.minimumExperience
+      ? "Meets minimum experience"
+      : "Does not meet minimum experience"
+  };
+
+  return {
+    overallMatch: Math.round(matchPercentage),
+    matchedSkills,
+    experienceMatch
+  };
 }

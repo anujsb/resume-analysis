@@ -1,5 +1,5 @@
 // src/lib/db/schema.ts
-import { serial, text, timestamp, pgTable, jsonb } from "drizzle-orm/pg-core";
+import { serial, text, timestamp, pgTable, jsonb, integer } from "drizzle-orm/pg-core";
 
 export const candidates = pgTable("candidates", {
   id: serial("id").primaryKey(),
@@ -20,9 +20,22 @@ export const analyses = pgTable("analyses", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const jobRequirements = pgTable("job_requirements", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  requiredSkills: jsonb("required_skills").notNull(), // Array of strings
+  minimumExperience: integer("minimum_experience").notNull(),
+  preferredExperience: integer("preferred_experience").notNull(),
+  experienceLevel: text("experience_level").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Types for TypeScript
 export type Candidate = typeof candidates.$inferSelect;
 export type NewCandidate = typeof candidates.$inferInsert;
 
 export type Analysis = typeof analyses.$inferSelect;
 export type NewAnalysis = typeof analyses.$inferInsert;
+
+export type JobRequirement = typeof jobRequirements.$inferSelect;
+export type NewJobRequirement = typeof jobRequirements.$inferInsert;
