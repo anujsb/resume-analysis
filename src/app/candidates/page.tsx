@@ -17,16 +17,11 @@ import { CandidateWithAnalysis } from "@/types/candidate";
 import { JobRequirement } from "@/types/job-requirements";
 import { Separator } from "@/components/ui/separator";
 
-interface ViewMode {
-  type: "grid" | "list";
-}
-
 function CandidatesList() {
   const [candidatesList, setCandidatesList] = useState<CandidateWithAnalysis[]>([]);
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateWithAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode["type"]>("list");
   const [sortBy, setSortBy] = useState<string>("newest");
   const [filterExperience, setFilterExperience] = useState<string>("all");
   const [savedRequirements, setSavedRequirements] = useState<JobRequirement[]>([]);
@@ -128,105 +123,6 @@ function CandidatesList() {
       }
     });
 
-  const renderCandidateCard = (item: CandidateWithAnalysis) => (
-    <Card 
-      key={item.candidate.id}
-      className={`hover:border-primary/50 shadow-sm hover:shadow transition-all cursor-pointer ${
-        selectedCandidate?.candidate.id === item.candidate.id ? 'border-primary border-2' : ''
-      }`}
-      onClick={() => setSelectedCandidate(item)}
-    >
-      <CardHeader className="pb-2">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-12 w-12 border">
-            <AvatarFallback className="bg-primary/10 text-primary font-medium">
-              {getInitials(item.candidate.name)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="space-y-1">
-            <CardTitle className="text-base flex items-center gap-2">
-              {item.candidate.name}
-              {selectedCandidate?.candidate.id === item.candidate.id && (
-                <Badge className="ml-1">Active</Badge>
-              )}
-            </CardTitle>
-            {item.candidate.email && (
-              <CardDescription className="flex items-center gap-1 text-xs">
-                <Mail className="h-3 w-3" />
-                {item.candidate.email}
-              </CardDescription>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="pb-2">
-        <div className="flex flex-wrap gap-2 pt-2">
-          {item.analysis.skills.slice(0, viewMode === "grid" ? 3 : 5).map((skill, index) => (
-            <Badge key={index} variant="secondary" className="text-xs">
-              {skill.skill}
-            </Badge>
-          ))}
-          {item.analysis.skills.length > (viewMode === "grid" ? 3 : 5) && (
-            <Badge variant="outline" className="text-xs">
-              +{item.analysis.skills.length - (viewMode === "grid" ? 3 : 5)}
-            </Badge>
-          )}
-        </div>
-      </CardContent>
-      <CardFooter className="flex justify-between items-center pt-0">
-        <div className="text-xs text-muted-foreground flex items-center gap-1">
-          <Calendar className="h-3 w-3" />
-          {new Date(item.candidate.createdAt).toLocaleDateString()}
-        </div>
-        <ExperienceLevelBadge 
-          level={item.analysis.experienceLevel}
-          years={item.analysis.workExperienceYears}
-        />
-      </CardFooter>
-    </Card>
-  );
-
-  const renderCandidateListItem = (item: CandidateWithAnalysis) => (
-    <Card 
-      key={item.candidate.id}
-      className={`hover:border-primary/50 shadow-sm hover:shadow transition-all cursor-pointer ${
-        selectedCandidate?.candidate.id === item.candidate.id ? 'border-primary border-2' : ''
-      }`}
-      onClick={() => setSelectedCandidate(item)}
-    >
-      <div className="flex items-center p-4">
-        <Avatar className="h-10 w-10 mr-4">
-          <AvatarFallback className="bg-primary/10 text-primary">
-            {getInitials(item.candidate.name)}
-          </AvatarFallback>
-        </Avatar>
-        
-        <div className="flex-grow min-w-0">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="font-medium truncate">{item.candidate.name}</h3>
-            <ExperienceLevelBadge 
-              level={item.analysis.experienceLevel}
-              years={item.analysis.workExperienceYears}
-            />
-          </div>
-          
-          <div className="flex items-center text-xs text-muted-foreground">
-            {item.candidate.email && (
-              <span className="flex items-center mr-4 truncate">
-                <Mail className="h-3 w-3 mr-1" />
-                {item.candidate.email}
-              </span>
-            )}
-            <span className="flex items-center">
-              <Calendar className="h-3 w-3 mr-1" />
-              {new Date(item.candidate.createdAt).toLocaleDateString()}
-            </span>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-
   const renderCandidatesList = () => {
     if (isLoading) {
       return (
@@ -258,15 +154,47 @@ function CandidatesList() {
     }
 
     return (
-      <div className={viewMode === "grid" 
-        ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-        : "space-y-2"
-      }>
-        {filteredAndSortedCandidates.map(item => 
-          viewMode === "grid" 
-            ? renderCandidateCard(item) 
-            : renderCandidateListItem(item)
-        )}
+      <div className="space-y-2">
+        {filteredAndSortedCandidates.map(item => (
+          <Card 
+            key={item.candidate.id}
+            className={`hover:border-primary/50 shadow-sm hover:shadow transition-all cursor-pointer ${
+              selectedCandidate?.candidate.id === item.candidate.id ? 'border-primary border-2' : ''
+            }`}
+            onClick={() => setSelectedCandidate(item)}
+          >
+            <div className="flex items-center p-4">
+              <Avatar className="h-10 w-10 mr-4">
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  {getInitials(item.candidate.name)}
+                </AvatarFallback>
+              </Avatar>
+              
+              <div className="flex-grow min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="font-medium truncate">{item.candidate.name}</h3>
+                  <ExperienceLevelBadge 
+                    level={item.analysis.experienceLevel}
+                    years={item.analysis.workExperienceYears}
+                  />
+                </div>
+                
+                <div className="flex items-center text-xs text-muted-foreground">
+                  {item.candidate.email && (
+                    <span className="flex items-center mr-4 truncate">
+                      <Mail className="h-3 w-3 mr-1" />
+                      {item.candidate.email}
+                    </span>
+                  )}
+                  <span className="flex items-center">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    {new Date(item.candidate.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Card>
+        ))}
       </div>
     );
   };
@@ -275,7 +203,7 @@ function CandidatesList() {
     <div className="container mx-auto py-6 max-w-screen-2xl">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Sidebar */}
-        <div className="md:col-span-6 xl:col-span-5 space-y-6">
+        <div className="md:col-span-4 xl:col-span-5 space-y-6">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Candidates</h1>
@@ -298,7 +226,7 @@ function CandidatesList() {
           </div>
           
           <Card className="shadow-sm">
-            <CardContent className="p-4">
+            <CardContent className="px-6">
               <div className="space-y-4">
                 <div className="relative">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -320,7 +248,7 @@ function CandidatesList() {
                   )}
                 </div>
                 
-                <div className="space-y-4">
+                <div className="flex gap-8 items-center justify-start ">
                   <div>
                     <label className="text-sm font-medium mb-1 block">Experience Level</label>
                     <Select value={filterExperience} onValueChange={setFilterExperience}>
@@ -350,30 +278,6 @@ function CandidatesList() {
                         <SelectItem value="alphabetical">Alphabetical</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium mb-1 block">View Mode</label>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant={viewMode === "grid" ? "default" : "outline"} 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => setViewMode("grid")}
-                      >
-                        <Grid className="h-4 w-4 mr-2" />
-                        Grid
-                      </Button>
-                      <Button 
-                        variant={viewMode === "list" ? "default" : "outline"} 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => setViewMode("list")}
-                      >
-                        <List className="h-4 w-4 mr-2" />
-                        List
-                      </Button>
-                    </div>
                   </div>
                 </div>
               </div>
