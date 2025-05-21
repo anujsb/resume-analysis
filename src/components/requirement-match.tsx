@@ -13,18 +13,9 @@ import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, XCircle, AlertCircle, Trophy } from "lucide-react";
 import { JobRequirement } from "@/types/job-requirements";
 import { SkillProficiency } from "@/types/index";
+import { MatchResult, SkillMatchResult, CategoryMatch } from "@/types/matching";
 
-// Add MatchResult interface
-interface MatchResult {
-  overallMatch: number;
-  skillsMatch: number;
-  experienceMatch: boolean;
-  matchedSkills: Array<{
-    skill: string;
-    matched: boolean;
-    proficiency?: string;
-  }>;
-}
+// Remove the local interfaces and use the imported ones
 
 interface RequirementMatchProps {
   jobRequirement: JobRequirement;
@@ -39,46 +30,80 @@ export function RequirementMatch({
   candidateExperienceYears,
   onMatchCalculated
 }: RequirementMatchProps) {
-  // Move calculations into useMemo to prevent recalculations
-  const matchedSkills = useMemo(() => {
-    return jobRequirement.requiredSkills.map(reqSkill => {
+  const calculateCategoryMatch = (requiredSkills: string[], category: "primary" | "secondary" | "niceToHave"): CategoryMatch => {
+    const matchedSkills = requiredSkills.map(reqSkill => {
       const found = candidateSkills.find(
         s => s.skill.toLowerCase().includes(reqSkill.toLowerCase())
       );
       return {
         skill: reqSkill,
         matched: !!found,
+        category,
         proficiency: found?.proficiency
       };
     });
-  }, [jobRequirement.requiredSkills, candidateSkills]);
 
-  const matchPercentage = useMemo(() => {
+    const matched = matchedSkills.filter(s => s.matched).length;
+    const total = matchedSkills.length;
+    
+    return {
+      total,
+      matched,
+      percentage: total > 0 ? Math.round((matched / total) * 100) : 100,
+      skills: matchedSkills
+    };
+  };
+
+  // Calculate matches for each category
+  const primaryMatch = useMemo(() => 
+    calculateCategoryMatch(jobRequirement.primarySkills, "primary"),
+    [jobRequirement.primarySkills, candidateSkills]
+  );
+
+  const secondaryMatch = useMemo(() => 
+    calculateCategoryMatch(jobRequirement.secondarySkills, "secondary"),
+    [jobRequirement.secondarySkills, candidateSkills]
+  );
+
+  const niceToHaveMatch = useMemo(() => 
+    calculateCategoryMatch(jobRequirement.niceToHaveSkills, "niceToHave"),
+    [jobRequirement.niceToHaveSkills, candidateSkills]
+  );
+
+  // Calculate overall match with weighted percentages
+  const overallMatch = useMemo(() => {
+    const weights = {
+      primary: 0.6,    // 60% weight for primary skills
+      secondary: 0.3,  // 30% weight for secondary skills
+      niceToHave: 0.1  // 10% weight for nice-to-have skills
+    };
+
     return Math.round(
-      (matchedSkills.filter(s => s.matched).length / matchedSkills.length) * 100
+      (primaryMatch.percentage * weights.primary) +
+      (secondaryMatch.percentage * weights.secondary) +
+      (niceToHaveMatch.percentage * weights.niceToHave)
     );
-  }, [matchedSkills]);
+  }, [primaryMatch, secondaryMatch, niceToHaveMatch]);
 
-  const experienceYears = parseInt(candidateExperienceYears);
+  // Experience match calculation
   const experienceMatch = useMemo(() => ({
-    matches: experienceYears >= jobRequirement.minimumExperience,
-    description: experienceYears >= jobRequirement.preferredExperience
+    matches: parseInt(candidateExperienceYears) >= jobRequirement.minimumExperience,
+    description: parseInt(candidateExperienceYears) >= jobRequirement.preferredExperience
       ? "Exceeds required experience"
-      : experienceYears >= jobRequirement.minimumExperience
+      : parseInt(candidateExperienceYears) >= jobRequirement.minimumExperience
       ? "Meets minimum experience"
       : "Below minimum experience"
-  }), [experienceYears, jobRequirement.minimumExperience, jobRequirement.preferredExperience]);
+  }), [candidateExperienceYears, jobRequirement.minimumExperience, jobRequirement.preferredExperience]);
 
-  // Call onMatchCalculated only when relevant values change
   useEffect(() => {
-    const result: MatchResult = {
-      overallMatch: matchPercentage,
-      skillsMatch: matchedSkills.filter(s => s.matched).length / matchedSkills.length,
-      experienceMatch: experienceMatch.matches,
-      matchedSkills
-    };
-    onMatchCalculated?.(result);
-  }, [matchPercentage, matchedSkills, experienceMatch.matches]);
+    onMatchCalculated?.({
+      overallMatch,
+      primaryMatch,
+      secondaryMatch,
+      niceToHaveMatch,
+      experienceMatch: experienceMatch.matches
+    });
+  }, [overallMatch, primaryMatch, secondaryMatch, niceToHaveMatch, experienceMatch]);
 
   return (
     <Card className="bg-gradient-to-br from-slate-50 to-white border-2">
@@ -93,50 +118,46 @@ export function RequirementMatch({
           </div>
           <div className="text-right">
             <div className="text-3xl font-bold text-primary">
-              {matchPercentage}%
+              {overallMatch}%
             </div>
             <div className="text-sm text-gray-500">Overall Match</div>
           </div>
         </div>
-        <Progress value={matchPercentage} className="h-2" />
+        <Progress value={overallMatch} className="h-2" />
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Skills Section */}
-        <div className="rounded-lg border bg-card p-4">
-          <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-            <code className="text-sm bg-primary/10 text-primary px-2 py-1 rounded">
-              {matchedSkills.filter(s => s.matched).length} / {matchedSkills.length}
+        {/* Primary Skills */}
+        <div className="rounded-lg border bg-blue-50/50 p-4">
+          <h3 className="text-lg font-medium mb-4 flex items-center gap-2 text-blue-700">
+            <code className="text-sm bg-blue-100 px-2 py-1 rounded">
+              {primaryMatch.matched} / {primaryMatch.total}
             </code>
-            Required Skills Matched
+            Primary Skills ({primaryMatch.percentage}%)
           </h3>
-          
-          <div className="grid gap-2">
-            {matchedSkills.map(skill => (
-              <div 
-                key={skill.skill} 
-                className={`flex items-center justify-between p-3 rounded-lg ${
-                  skill.matched ? 'bg-green-50' : 'bg-red-50'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  {skill.matched ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  ) : (
-                    <XCircle className="h-5 w-5 text-red-500" />
-                  )}
-                  <span className={skill.matched ? 'font-medium' : 'text-gray-500'}>
-                    {skill.skill}
-                  </span>
-                </div>
-                {skill.matched && (
-                  <span className="text-sm px-2 py-1 bg-white rounded-full shadow-sm">
-                    {skill.proficiency}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
+          <SkillsList skills={primaryMatch.skills} />
+        </div>
+
+        {/* Secondary Skills */}
+        <div className="rounded-lg border bg-green-50/50 p-4">
+          <h3 className="text-lg font-medium mb-4 flex items-center gap-2 text-green-700">
+            <code className="text-sm bg-green-100 px-2 py-1 rounded">
+              {secondaryMatch.matched} / {secondaryMatch.total}
+            </code>
+            Secondary Skills ({secondaryMatch.percentage}%)
+          </h3>
+          <SkillsList skills={secondaryMatch.skills} />
+        </div>
+
+        {/* Nice to Have Skills */}
+        <div className="rounded-lg border bg-gray-50/50 p-4">
+          <h3 className="text-lg font-medium mb-4 flex items-center gap-2 text-gray-700">
+            <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+              {niceToHaveMatch.matched} / {niceToHaveMatch.total}
+            </code>
+            Nice to Have Skills ({niceToHaveMatch.percentage}%)
+          </h3>
+          <SkillsList skills={niceToHaveMatch.skills} />
         </div>
 
         {/* Experience Section */}
@@ -185,5 +206,37 @@ export function RequirementMatch({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// Helper component for rendering skills lists
+function SkillsList({ skills }: { skills: SkillMatchResult[] }) {
+  return (
+    <div className="grid gap-2">
+      {skills.map(skill => (
+        <div 
+          key={skill.skill} 
+          className={`flex items-center justify-between p-3 rounded-lg ${
+            skill.matched ? 'bg-white/80' : 'bg-white/40'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {skill.matched ? (
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+            ) : (
+              <XCircle className="h-5 w-5 text-red-500" />
+            )}
+            <span className={skill.matched ? 'font-medium' : 'text-gray-500'}>
+              {skill.skill}
+            </span>
+          </div>
+          {skill.matched && skill.proficiency && (
+            <span className="text-sm px-2 py-1 bg-white rounded-full shadow-sm">
+              {skill.proficiency}
+            </span>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }

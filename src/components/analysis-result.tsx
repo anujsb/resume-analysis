@@ -26,6 +26,7 @@ import { JobRequirement } from "@/types/job-requirements";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { InterviewQuestions } from "./interview-questions";
+import { MatchResult } from "@/types/matching";
 
 interface SkillProficiency {
   skill: string;
@@ -48,17 +49,6 @@ interface AnalysisResultProps {
   };
   jobRequirement?: JobRequirement | null;
   savedRequirements?: JobRequirement[]; // Add this prop
-}
-
-interface MatchResult {
-  overallMatch: number;
-  skillsMatch: number;
-  experienceMatch: boolean;
-  matchedSkills: Array<{
-    skill: string;
-    matched: boolean;
-    proficiency?: string;
-  }>;
 }
 
 export function AnalysisResult({ 

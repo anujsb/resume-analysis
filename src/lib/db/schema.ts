@@ -23,7 +23,9 @@ export const analyses = pgTable("analyses", {
 export const jobRequirements = pgTable("job_requirements", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  requiredSkills: jsonb("required_skills").notNull(), // Array of strings
+  primarySkills: jsonb("primary_skills").notNull(), // Array of strings
+  secondarySkills: jsonb("secondary_skills").notNull(), // Array of strings
+  niceToHaveSkills: jsonb("nice_to_have_skills").notNull(), // Array of strings
   minimumExperience: integer("minimum_experience").notNull(),
   preferredExperience: integer("preferred_experience").notNull(),
   experienceLevel: text("experience_level").notNull(),
