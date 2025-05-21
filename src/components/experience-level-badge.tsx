@@ -10,7 +10,7 @@ interface ExperienceLevelBadgeProps {
 }
 
 export function ExperienceLevelBadge({ level, years, className }: ExperienceLevelBadgeProps) {
-  const baseClasses = "px-3 py-1 rounded-full text-xs font-medium";
+  const baseClasses = "px-3 py-1 rounded-lg text-xs font-medium";
   
   const levelConfig = {
     fresher: {

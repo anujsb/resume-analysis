@@ -1,3 +1,4 @@
+// src/config/navigation.ts
 import { HomeIcon, BriefcaseIcon, UsersIcon, BarChartIcon } from "lucide-react"
 
 export const navigation = [

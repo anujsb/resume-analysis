@@ -1,5 +1,7 @@
+// src/components/requirement-match.tsx
 "use client";
 
+import React, { useEffect, useMemo } from "react";
 import { 
   Card, 
   CardContent, 
@@ -12,41 +14,71 @@ import { CheckCircle2, XCircle, AlertCircle, Trophy } from "lucide-react";
 import { JobRequirement } from "@/types/job-requirements";
 import { SkillProficiency } from "@/types/index";
 
+// Add MatchResult interface
+interface MatchResult {
+  overallMatch: number;
+  skillsMatch: number;
+  experienceMatch: boolean;
+  matchedSkills: Array<{
+    skill: string;
+    matched: boolean;
+    proficiency?: string;
+  }>;
+}
+
 interface RequirementMatchProps {
   jobRequirement: JobRequirement;
   candidateSkills: SkillProficiency[];
   candidateExperienceYears: string;
+  onMatchCalculated?: (result: MatchResult) => void;
 }
 
 export function RequirementMatch({ 
   jobRequirement, 
   candidateSkills, 
-  candidateExperienceYears 
+  candidateExperienceYears,
+  onMatchCalculated
 }: RequirementMatchProps) {
-  const matchedSkills = jobRequirement.requiredSkills.map(reqSkill => {
-    const found = candidateSkills.find(
-      s => s.skill.toLowerCase().includes(reqSkill.toLowerCase())
-    );
-    return {
-      skill: reqSkill,
-      matched: !!found,
-      proficiency: found?.proficiency
-    };
-  });
+  // Move calculations into useMemo to prevent recalculations
+  const matchedSkills = useMemo(() => {
+    return jobRequirement.requiredSkills.map(reqSkill => {
+      const found = candidateSkills.find(
+        s => s.skill.toLowerCase().includes(reqSkill.toLowerCase())
+      );
+      return {
+        skill: reqSkill,
+        matched: !!found,
+        proficiency: found?.proficiency
+      };
+    });
+  }, [jobRequirement.requiredSkills, candidateSkills]);
 
-  const matchPercentage = Math.round(
-    (matchedSkills.filter(s => s.matched).length / matchedSkills.length) * 100
-  );
+  const matchPercentage = useMemo(() => {
+    return Math.round(
+      (matchedSkills.filter(s => s.matched).length / matchedSkills.length) * 100
+    );
+  }, [matchedSkills]);
 
   const experienceYears = parseInt(candidateExperienceYears);
-  const experienceMatch = {
+  const experienceMatch = useMemo(() => ({
     matches: experienceYears >= jobRequirement.minimumExperience,
     description: experienceYears >= jobRequirement.preferredExperience
       ? "Exceeds required experience"
       : experienceYears >= jobRequirement.minimumExperience
       ? "Meets minimum experience"
       : "Below minimum experience"
-  };
+  }), [experienceYears, jobRequirement.minimumExperience, jobRequirement.preferredExperience]);
+
+  // Call onMatchCalculated only when relevant values change
+  useEffect(() => {
+    const result: MatchResult = {
+      overallMatch: matchPercentage,
+      skillsMatch: matchedSkills.filter(s => s.matched).length / matchedSkills.length,
+      experienceMatch: experienceMatch.matches,
+      matchedSkills
+    };
+    onMatchCalculated?.(result);
+  }, [matchPercentage, matchedSkills, experienceMatch.matches]);
 
   return (
     <Card className="bg-gradient-to-br from-slate-50 to-white border-2">

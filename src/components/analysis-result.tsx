@@ -18,12 +18,14 @@ import {
   Mail, 
   Phone, 
   BookOpen,
-  FileText
+  FileText,
+  XCircle
 } from "lucide-react";
 import { RequirementMatch } from "./requirement-match";
 import { JobRequirement } from "@/types/job-requirements";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { InterviewQuestions } from "./interview-questions";
 
 interface SkillProficiency {
   skill: string;
@@ -48,6 +50,17 @@ interface AnalysisResultProps {
   savedRequirements?: JobRequirement[]; // Add this prop
 }
 
+interface MatchResult {
+  overallMatch: number;
+  skillsMatch: number;
+  experienceMatch: boolean;
+  matchedSkills: Array<{
+    skill: string;
+    matched: boolean;
+    proficiency?: string;
+  }>;
+}
+
 export function AnalysisResult({ 
   candidate, 
   analysis, 
@@ -58,6 +71,13 @@ export function AnalysisResult({
   const [selectedRequirement, setSelectedRequirement] = useState<JobRequirement | null>(
     jobRequirement || null
   );
+  // Add state for match result
+  const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
+
+  // Add handler for match calculation
+  const handleMatchCalculated = (result: MatchResult) => {
+    setMatchResult(result);
+  };
 
   const proficiencyColor = {
     beginner: "bg-slate-100 text-slate-800",
@@ -170,7 +190,38 @@ export function AnalysisResult({
                     jobRequirement={selectedRequirement}
                     candidateSkills={analysis.skills}
                     candidateExperienceYears={analysis.workExperienceYears}
+                    onMatchCalculated={handleMatchCalculated}
                   />
+
+                  {matchResult && (
+                    <>
+                      {matchResult.overallMatch >= 60 ? (
+                        <div className="mt-8 pt-6 border-t">
+                          <h3 className="text-lg font-medium mb-4">Interview Preparation</h3>
+                          <InterviewQuestions
+                            skills={analysis.skills}
+                            experienceLevel={analysis.experienceLevel}
+                            experienceYears={analysis.workExperienceYears}
+                          />
+                        </div>
+                      ) : (
+                        <div className="mt-8 pt-6 border-t">
+                          <div className="rounded-lg bg-red-50 p-4">
+                            <div className="flex items-center gap-3">
+                              <XCircle className="h-5 w-5 text-red-500" />
+                              <div>
+                                <h4 className="font-medium text-red-900">Not Meeting Minimum Requirements</h4>
+                                <p className="text-red-700 text-sm mt-1">
+                                  This candidate's profile matches only {matchResult.overallMatch}% of the job requirements. 
+                                  Consider candidates with a match rate of 60% or higher.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
             </CardContent>
