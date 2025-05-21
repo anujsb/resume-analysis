@@ -126,7 +126,7 @@ export function AnalysisResult({
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs defaultValue="comparison" className="w-full">
         <TabsList className="w-full">
           <TabsTrigger value="overview" className="flex-1">Overview</TabsTrigger>
           <TabsTrigger value="comparison" className="flex-1">Requirements Match</TabsTrigger>
