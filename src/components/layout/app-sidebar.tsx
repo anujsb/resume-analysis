@@ -1,42 +1,10 @@
-// "use client"
-
-// import Link from "next/link"
-// import { usePathname } from "next/navigation"
-// import { cn } from "@/lib/utils"
-// import { navigation } from "@/config/navigation"
-
-// export function Sidebar() {
-//   const pathname = usePathname()
-
-//   return (
-//     <div className="pb-12 min-h-screen">
-//       <div className="space-y-4 py-4">
-//         <div className="px-3 py-2">
-//           <h2 className="mb-2 px-4 text-lg font-semibold">
-//             Resume Analysis
-//           </h2>
-//           <div className="space-y-1">
-//             {navigation.map((item) => (
-//               <Link
-//                 key={item.href}
-//                 href={item.href}
-//                 className={cn(
-//                   "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-//                   pathname === item.href ? "bg-accent text-accent-foreground" : "transparent"
-//                 )}
-//               >
-//                 <item.icon className="mr-2 h-4 w-4" />
-//                 {item.title}
-//               </Link>
-//             ))}
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   )
-// }
-
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react"
+"use client"
+import { Calendar, FormInput, Home, Inbox, Search, Settings } from "lucide-react"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { ChevronDown, User } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { CandidateWithAnalysis } from "@/types/candidate"
 
 import {
   Sidebar,
@@ -47,38 +15,43 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSkeleton,
 } from "@/components/ui/sidebar"
-import { navigation } from "@/config/navigation"
-// Menu items.
-// const items = [
-//   {
-//     title: "Home",
-//     url: "#",
-//     icon: Home,
-//   },
-//   {
-//     title: "Inbox",
-//     url: "#",
-//     icon: Inbox,
-//   },
-//   {
-//     title: "Calendar",
-//     url: "#",
-//     icon: Calendar,
-//   },
-//   {
-//     title: "Search",
-//     url: "#",
-//     icon: Search,
-//   },
-//   {
-//     title: "Settings",
-//     url: "#",
-//     icon: Settings,
-//   },
-// ]
+// import { navigation } from "@/config/navigation"
+import Link from "next/link"
 
 export function AppSidebar() {
+  const [candidates, setCandidates] = useState<CandidateWithAnalysis[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    const loadCandidates = async () => {
+      setIsLoading(true)
+      try {
+        const response = await fetch("/api/candidates")
+        const data = await response.json()
+        if (data.success) {
+          setCandidates(data.data)
+        }
+      } catch (error) {
+        console.error("Failed to load candidates:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadCandidates()
+  }, [])
+
+  const getInitials = (name: string): string => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2)
+  }
+
   return (
     <Sidebar collapsible="icon" variant="floating">
       <SidebarContent>
@@ -86,18 +59,76 @@ export function AppSidebar() {
           <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigation.map((item) =>  (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.href}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton>
+                  <Link href="/dashboard" className="flex items-center">
+                    <Home className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton>
+                  <Link href="/requirements" className="flex items-center">
+                    <Inbox className="mr-2 h-4 w-4" />
+                    Job Requirements
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <Collapsible defaultOpen className="group/collapsible">
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton className="w-full">
+                      <div className="flex w-full items-center">
+                        <a href="/candidates" className="flex w-full items-center">
+                          <User className="mr-2 h-4 w-4" />
+                          <span>Candidates</span>
+                        </a>
+                        <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                      </div>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </CollapsibleTrigger>
+
+                <CollapsibleContent>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {isLoading ? (
+                        Array.from({ length: 3 }).map((_, i) => (
+                          <SidebarMenuSkeleton key={i} showIcon />
+                        ))
+                      ) : (
+                        candidates.map((item) => (
+                          <SidebarMenuItem key={item.candidate.id}>
+                            <SidebarMenuButton asChild>
+                              <Link href={`/candidates/${item.candidate.id}`}>
+                                <Avatar className="h-6 w-6">
+                                  <AvatarFallback className="text-xs">
+                                    {getInitials(item.candidate.name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span>{item.candidate.name}</span>
+                              </Link>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))
+                      )}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </CollapsibleContent>
+              </Collapsible>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton>
+                  <Link href="/reports" className="flex items-center">
+                    <FormInput className="mr-2 h-4 w-4" />
+                    Reports
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
-            
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
