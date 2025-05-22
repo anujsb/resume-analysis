@@ -213,7 +213,7 @@ export function JobRequirementsForm({
             <Slider 
               id="prefExp"
               value={[requirements.preferredExperience]} 
-              min={requirements.minimumExperience}
+              // min={requirements.minimumExperience}
               max={15}
               step={1}
               onValueChange={(value: number[]) => setRequirements({...requirements, preferredExperience: value[0]})}

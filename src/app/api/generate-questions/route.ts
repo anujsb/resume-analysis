@@ -8,47 +8,89 @@ interface QuestionRequest {
   }>;
   experienceLevel: string;
   experienceYears: string;
+  primarySkills: Array<{
+    skill: string;
+    proficiency: string;
+  }>;
+  secondarySkills: Array<{
+    skill: string;
+    proficiency: string;
+  }>;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: QuestionRequest = await request.json();
-    const { skills, experienceLevel, experienceYears } = body;
+    const { skills = [], experienceLevel = 'junior', experienceYears = '0', primarySkills = [], secondarySkills = [] } = body;
+
+    if (!skills.length) {
+      return NextResponse.json(
+        { error: "No skills provided" },
+        { status: 400 }
+      );
+    }
 
     const genAI = getGeminiClient();
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    // Create a structured prompt based on experience level
     const difficultyLevel = getDifficultyLevel(experienceLevel, experienceYears);
-    const skillsList = skills.map(s => `${s.skill} (${s.proficiency})`).join(", ");
+    
+    // Format skills lists with null checks
+    let primarySkillsList = Array.isArray(primarySkills) 
+      ? primarySkills.map(s => `${s.skill} (${s.proficiency})`).join(", ")
+      : skills.filter(s => s.proficiency === "advanced" || s.proficiency === "expert")
+          .map(s => `${s.skill} (${s.proficiency})`).join(", ");
+
+    let secondarySkillsList = Array.isArray(secondarySkills)
+      ? secondarySkills.map(s => `${s.skill} (${s.proficiency})`).join(", ")
+      : skills.filter(s => s.proficiency === "beginner" || s.proficiency === "intermediate")
+          .map(s => `${s.skill} (${s.proficiency})`).join(", ");
+
+    // If no skills are categorized, use all skills
+    if (!primarySkillsList && !secondarySkillsList) {
+      const allSkills = skills.map(s => `${s.skill} (${s.proficiency})`).join(", ");
+      primarySkillsList = allSkills;
+      secondarySkillsList = allSkills;
+    }
 
     const prompt = `
-      Generate a set of technical interview questions for a ${experienceLevel} level candidate 
-      with ${experienceYears} years of experience in: ${skillsList}.
+      Generate a structured technical interview question set for a ${experienceLevel} level candidate 
+      with ${experienceYears} years of experience.
 
-      Requirements:
-      - Difficulty level: ${difficultyLevel}
-      - Generate 5-8 questions
-      - Include a mix of theoretical and practical questions
-      - Questions should be relevant to the candidate's proficiency levels
-      - For each question, provide:
-        * The question
-        * Expected answer points
-        * Difficulty rating (Easy/Medium/Hard)
+      Primary Skills: ${primarySkillsList}
+      Secondary Skills: ${secondarySkillsList}
 
-      Format the response as a JSON array of objects with:
+      Generate questions in the following categories:
+      1. Primary Skills (3-4 questions)
+      2. Secondary Skills (3-4 questions)
+      3. Behavioral Questions (3-4 questions)
+      4. Project Discussion Questions (2-3 questions)
+
+      Requirements for each category:
+      - Primary Skills: Technical questions focusing on ${difficultyLevel} of primary skills
+      - Secondary Skills: Technical questions about supporting technologies
+      - Behavioral: Leadership, teamwork, and problem-solving scenarios
+      - Project Questions: Architecture, decisions, challenges, and outcomes
+
+      Format the response as a JSON object with categorized arrays:
       {
-        "question": "The question text",
-        "expectedAnswer": "Key points to look for in the answer",
-        "difficulty": "Easy/Medium/Hard"
+        "primarySkills": [
+          {
+            "question": "Question text",
+            "expectedAnswer": "Key points to look for",
+            "difficulty": "Easy/Medium/Hard"
+          }
+        ],
+        "secondarySkills": [...],
+        "behavioral": [...],
+        "projectDiscussion": [...]
       }
     `;
 
     const result = await model.generateContent(prompt);
     const response = result.response.text();
     
-    // Extract JSON from the response
-    const jsonMatch = response.match(/\[[\s\S]*\]/);
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
     const questions = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
 
     return NextResponse.json({
