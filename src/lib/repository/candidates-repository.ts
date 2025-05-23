@@ -64,4 +64,20 @@ export class CandidatesRepository {
     
     return results;
   }
+
+  // Update candidate status
+  async updateCandidateStatus(id: number, status: string) {
+    await db
+      .update(candidates)
+      .set({ status })
+      .where(eq(candidates.id, id));
+  }
+
+  // Update candidate remark
+  async updateCandidateRemark(id: number, remark: string) {
+    await db
+      .update(candidates)
+      .set({ remark })
+      .where(eq(candidates.id, id));
+  }
 }

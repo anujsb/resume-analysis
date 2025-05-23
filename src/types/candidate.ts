@@ -1,9 +1,13 @@
+export type CandidateStatus = "new" | "rejected" | "hold" | "selected";
+
 export interface Candidate {
   id: number;
   name: string;
   email?: string | null;
   phone?: string | null;
   resumeText: string;
+  status: CandidateStatus;
+  remark?: string;
   createdAt: string;
 }
 

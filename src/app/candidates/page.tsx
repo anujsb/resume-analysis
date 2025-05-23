@@ -2,39 +2,84 @@
 
 import { useEffect, useState } from "react"
 import { CandidateWithAnalysis } from "@/types/candidate"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Card } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export default function CandidatesListPage() {
   const [candidates, setCandidates] = useState<CandidateWithAnalysis[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const loadCandidates = async () => {
-      try {
-        const response = await fetch("/api/candidates")
-        const data = await response.json()
-        if (data.success) {
-          setCandidates(data.data)
-        }
-      } catch (error) {
-        console.error("Failed to load candidates:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     loadCandidates()
   }, [])
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((word) => word[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2)
+  const loadCandidates = async () => {
+    try {
+      const response = await fetch("/api/candidates")
+      const data = await response.json()
+      if (data.success) {
+        setCandidates(data.data)
+      }
+    } catch (error) {
+      console.error("Failed to load candidates:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const updateCandidateStatus = async (id: number, status: string) => {
+    try {
+      const response = await fetch(`/api/candidates/${id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+      })
+      if (response.ok) {
+        loadCandidates()
+      }
+    } catch (error) {
+      console.error("Failed to update status:", error)
+    }
+  }
+
+  const updateCandidateRemark = async (id: number, remark: string) => {
+    try {
+      const response = await fetch(`/api/candidates/${id}/remark`, {
+        method: 'PUT',
+        body: JSON.stringify({ remark }),
+      })
+      if (response.ok) {
+        loadCandidates()
+      }
+    } catch (error) {
+      console.error("Failed to update remark:", error)
+    }
+  }
+
+  const getStatusBadgeColor = (status: string) => {
+    const colors = {
+      new: "bg-blue-100 text-blue-800",
+      rejected: "bg-red-100 text-red-800",
+      hold: "bg-yellow-100 text-yellow-800",
+      selected: "bg-green-100 text-green-800",
+    }
+    return colors[status as keyof typeof colors] || colors.new
   }
 
   if (isLoading) {
@@ -48,30 +93,60 @@ export default function CandidatesListPage() {
   return (
     <div className="container mx-auto p-6">
       <h1 className="mb-6 text-2xl font-bold">All Candidates</h1>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {candidates.map((item) => (
-          <Card
-            key={item.candidate.id}
-            className="p-4 hover:shadow-md transition-shadow"
-          >
-            <a
-              href={`/candidates/${item.candidate.id}`}
-              className="flex items-center space-x-4"
-            >
-              <Avatar>
-                <AvatarFallback>
-                  {getInitials(item.candidate.name)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h2 className="font-semibold">{item.candidate.name}</h2>
-                <p className="text-sm text-gray-500">
-                  {item.analysis.experienceLevel} • {item.analysis.workExperienceYears} years
-                </p>
-              </div>
-            </a>
-          </Card>
-        ))}
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[80px]">ID</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Remark</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {candidates.map((item) => (
+              <TableRow key={item.candidate.id}>
+                <TableCell>{item.candidate.id}</TableCell>
+                <TableCell>
+                  <a 
+                    href={`/candidates/${item.candidate.id}`}
+                    className="hover:underline font-medium"
+                  >
+                    {item.candidate.name}
+                  </a>
+                </TableCell>
+                <TableCell>
+                  {new Date(item.candidate.createdAt).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  <Select
+                    defaultValue={item.candidate.status}
+                    onValueChange={(value) => updateCandidateStatus(item.candidate.id, value)}
+                  >
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                      <SelectItem value="hold">Hold</SelectItem>
+                      <SelectItem value="selected">Selected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell>
+                  <Input
+                    placeholder="Add remark..."
+                    value={item.candidate.remark || ""}
+                    onChange={(e) => updateCandidateRemark(item.candidate.id, e.target.value)}
+                    className="text-sm"
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   )

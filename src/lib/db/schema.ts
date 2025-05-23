@@ -7,6 +7,8 @@ export const candidates = pgTable("candidates", {
   email: text("email"),
   phone: text("phone"),
   resumeText: text("resume_text").notNull(),
+  status: text("status").notNull().default("new"), // Add status field
+  remark: text("remark"), // Add remark field
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
