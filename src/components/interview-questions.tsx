@@ -1,10 +1,12 @@
-// src/components/interview-questions.tsx
+"use client";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, HelpCircle, RefreshCw } from "lucide-react";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { JobRequirement } from "@/types/job-requirements";
 
 interface Question {
   question: string;
@@ -26,6 +28,7 @@ interface InterviewQuestionsProps {
   }>;
   experienceLevel: string;
   experienceYears: string;
+  jobRequirement: JobRequirement;
   onExperienceLevelChange?: (level: string) => void;
 }
 
@@ -33,6 +36,7 @@ export function InterviewQuestions({
   skills,
   experienceLevel,
   experienceYears,
+  jobRequirement,
   onExperienceLevelChange
 }: InterviewQuestionsProps) {
   const [questions, setQuestions] = useState<CategorizedQuestions | null>(null);
@@ -52,6 +56,7 @@ export function InterviewQuestions({
           skills,
           experienceLevel: level,
           experienceYears,
+          jobRequirement,
         }),
       });
 

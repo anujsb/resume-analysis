@@ -9,24 +9,31 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ExperienceLevelBadge } from "./experience-level-badge";
 import { 
   ChevronDown, 
   ChevronUp, 
-  User, 
   Mail, 
-  Phone, 
+  Phone,
   BookOpen,
   FileText,
-  XCircle
+  Briefcase,
+  Code,
+  GraduationCap,
+  XCircle,
+  Trophy,
+  MessageSquare
 } from "lucide-react";
 import { RequirementMatch } from "./requirement-match";
-import { JobRequirement } from "@/types/job-requirements";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { InterviewQuestions } from "./interview-questions";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { JobRequirement } from "@/types/job-requirements";
 import { MatchResult } from "@/types/matching";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface SkillProficiency {
   skill: string;
@@ -61,10 +68,9 @@ export function AnalysisResult({
   const [selectedRequirement, setSelectedRequirement] = useState<JobRequirement | null>(
     jobRequirement || null
   );
-  // Add state for match result
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
+  const [activeTab, setActiveTab] = useState("match");
 
-  // Add handler for match calculation
   const handleMatchCalculated = (result: MatchResult) => {
     setMatchResult(result);
   };
@@ -89,211 +95,266 @@ export function AnalysisResult({
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <User className="h-6 w-6" /> {candidate.name}
-          </h1>
-          <div className="flex items-center gap-2 mt-2">
-            <ExperienceLevelBadge 
-              level={analysis.experienceLevel} 
-              years={analysis.workExperienceYears} 
-            />
-            {candidate.email && (
-              <Badge variant="secondary" className="flex items-center gap-1">
-                <Mail className="h-3 w-3" />
-                {candidate.email}
-              </Badge>
-            )}
-            {candidate.phone && (
-              <Badge variant="secondary" className="flex items-center gap-1">
-                <Phone className="h-3 w-3" />
-                {candidate.phone}
-              </Badge>
-            )}
-          </div>
-        </div>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Left Column - Candidate Details */}
+      <div className="space-y-6">
+        {/* Contact Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-primary" />
+              Professional Profile
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col gap-2">
+              <ExperienceLevelBadge 
+                level={analysis.experienceLevel} 
+                years={analysis.workExperienceYears}
+                className="w-fit" 
+              />
+              {candidate.email && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Mail className="h-4 w-4" />
+                  {candidate.email}
+                </div>
+              )}
+              {candidate.phone && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Phone className="h-4 w-4" />
+                  {candidate.phone}
+                </div>
+              )}
+            </div>
+            <Separator />
+            <div>
+              <h4 className="font-medium mb-2">Professional Summary</h4>
+              <p className="text-sm text-muted-foreground">{analysis.summary}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Skills Matrix */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Code className="h-5 w-5 text-primary" />
+              Skills Matrix
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {["expert", "advanced", "intermediate", "beginner"].map((level) => (
+                groupedSkills[level] && groupedSkills[level].length > 0 && (
+                  <div key={level} className="space-y-2">
+                    <h4 className="font-medium capitalize flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${
+                        level === 'expert' ? 'bg-purple-500' :
+                        level === 'advanced' ? 'bg-green-500' :
+                        level === 'intermediate' ? 'bg-blue-500' :
+                        'bg-gray-500'
+                      }`} />
+                      {level}
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {groupedSkills[level].map((skill, index) => (
+                        <Badge 
+                          key={index}
+                          variant={
+                            level === 'expert' ? 'default' :
+                            level === 'advanced' ? 'secondary' :
+                            'outline'
+                          }
+                        >
+                          {skill.skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Full Resume */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Full Resume
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="relative">
+              <pre className={`whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg ${
+                !showFullText ? "max-h-40 overflow-hidden" : ""
+              }`}>
+                {candidate.resumeText}
+              </pre>
+              {!showFullText && (
+                <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-background to-transparent" />
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowFullText(!showFullText)}
+                className="mt-2 w-full"
+              >
+                {showFullText ? (
+                  <>
+                    <ChevronUp className="h-4 w-4 mr-2" />
+                    Show Less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4 mr-2" />
+                    Show More
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <Tabs defaultValue="comparison" className="w-full">
-        <TabsList className="w-full">
-          <TabsTrigger value="overview" className="flex-1">Overview</TabsTrigger>
-          <TabsTrigger value="comparison" className="flex-1">Requirements Match</TabsTrigger>
-          <TabsTrigger value="details" className="flex-1">Full Details</TabsTrigger>
-        </TabsList>
-
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="mt-4 space-y-6">
-          {selectedRequirement && (
-            <RequirementMatch
-              jobRequirement={selectedRequirement}
-              candidateSkills={analysis.skills}
-              candidateExperienceYears={analysis.workExperienceYears}
-            />
-          )}
-          <Card>
-            <CardHeader>
-              <CardTitle>Professional Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-700">{analysis.summary}</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Comparison Tab */}
-        <TabsContent value="comparison" className="mt-4 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Compare Against Requirements</CardTitle>
-              <CardDescription>
-                Select a job requirement to compare against
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+      {/* Right Column - Requirements Match & Interview Questions */}
+      <div className="space-y-6">
+        {/* Top Actions Bar */}
+        <Card className="sticky top-4 z-10 bg-white/95 backdrop-blur border-b">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between gap-4">
               <Select 
                 value={selectedRequirement?.id?.toString() || ""} 
                 onValueChange={(value: string) => {
                   const req = savedRequirements.find(r => r.id?.toString() === value);
-                  if (req) setSelectedRequirement(req);
+                  if (req) {
+                    setSelectedRequirement(req);
+                    // Reset to match tab when changing requirement
+                    setActiveTab("match");
+                  }
                 }}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a job requirement" />
+                  <SelectValue placeholder="Select job requirement to analyze match" />
                 </SelectTrigger>
                 <SelectContent>
-                  {savedRequirements.map((req: JobRequirement) => (
-                    <SelectItem 
-                      key={req.id?.toString()} 
-                      value={req.id?.toString() || ""}
-                    >
+                  {savedRequirements.map((req) => (
+                    <SelectItem key={req.id?.toString()} value={req.id?.toString() || ""}>
                       {req.title}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </CardContent>
+        </Card>
 
-              {selectedRequirement && (
-                <div className="mt-6 space-y-6">
-                  <RequirementMatch
-                    jobRequirement={selectedRequirement}
-                    candidateSkills={analysis.skills}
-                    candidateExperienceYears={analysis.workExperienceYears}
-                    onMatchCalculated={handleMatchCalculated}
-                  />
-
-                  {matchResult && (
-                    <>
-                      {matchResult.overallMatch >= 60 ? (
-                        <div className="mt-8 pt-6 border-t">
-                          <h3 className="text-lg font-medium mb-4">Interview Preparation</h3>
-                          <InterviewQuestions
-                            skills={analysis.skills}
-                            experienceLevel={analysis.experienceLevel}
-                            experienceYears={analysis.workExperienceYears}
-                          />
-                        </div>
-                      ) : (
-                        <div className="mt-8 pt-6 border-t">
-                          <div className="rounded-lg bg-red-50 p-4">
-                            <div className="flex items-center gap-3">
-                              <XCircle className="h-5 w-5 text-red-500" />
-                              <div>
-                                <h4 className="font-medium text-red-900">Not Meeting Minimum Requirements</h4>
-                                <p className="text-red-700 text-sm mt-1">
-                                  This candidate's profile matches only {matchResult.overallMatch}% of the job requirements. 
-                                  Consider candidates with a match rate of 60% or higher.
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Details Tab */}
-        <TabsContent value="details" className="mt-4 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Skills Breakdown</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {["expert", "advanced", "intermediate", "beginner"].map((level) => (
-                  groupedSkills[level] && groupedSkills[level].length > 0 && (
-                    <div key={level} className="space-y-2">
-                      <h4 className="font-medium capitalize flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${
-                          level === 'expert' ? 'bg-purple-500' :
-                          level === 'advanced' ? 'bg-green-500' :
-                          level === 'intermediate' ? 'bg-blue-500' :
-                          'bg-gray-500'
-                        }`} />
-                        {level}
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {groupedSkills[level].map((skill, index) => (
-                          <Badge 
-                            key={index}
-                            variant={
-                              level === 'expert' ? 'default' :
-                              level === 'advanced' ? 'secondary' :
-                              'outline'
-                            }
-                          >
-                            {skill.skill}
-                          </Badge>
-                        ))}
+        {/* Tabbed Content */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full relative">
+            <TabsTrigger value="match" className="w-1/2">
+              <Trophy className="h-4 w-4 mr-2" />
+              Requirements Match
+            </TabsTrigger>
+            <TabsTrigger 
+              value="interview" 
+              className="w-1/2 relative group/tooltip cursor-help disabled:opacity-60 disabled:hover:cursor-help" // Changed class
+              // disabled={!selectedRequirement || !matchResult || matchResult.overallMatch < 60}
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Interview Questions
+              {(!selectedRequirement || !matchResult || matchResult.overallMatch < 60) && (
+                <div className="invisible group-hover/tooltip:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 w-64 bg-black/90 text-white text-xs rounded-md shadow-lg z-50">
+                  {!selectedRequirement ? (
+                    "Select a job requirement first"
+                  ) : !matchResult ? (
+                    "Analyzing candidate match..."
+                  ) : matchResult.overallMatch < 60 ? (
+                    <div className="space-y-1">
+                      <p>Candidate must match at least 60% of requirements</p>
+                      <div className="flex items-center justify-center gap-2 mt-1 pt-1 border-t border-white/20">
+                        <span>Current Match:</span>
+                        <span className="font-bold">{matchResult.overallMatch}%</span>
                       </div>
                     </div>
-                  )
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  ) : null}
+                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-black/90"></div>
+                </div>
+              )}
+            </TabsTrigger>
+          </TabsList>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Full Resume Text</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="relative">
-                <pre className={`whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg ${
-                  !showFullText ? "max-h-40 overflow-hidden" : ""
-                }`}>
-                  {candidate.resumeText}
-                </pre>
-                {!showFullText && (
-                  <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent" />
-                )}
-                <button
-                  onClick={() => setShowFullText(!showFullText)}
-                  className="mt-2 text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
-                >
-                  {showFullText ? (
-                    <>
-                      <ChevronUp className="h-4 w-4" />
-                      Show Less
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="h-4 w-4" />
-                      Show More
-                    </>
-                  )}
-                </button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="match" className="mt-4">
+            <ScrollArea className="h-[calc(100vh-12rem)]">
+              {selectedRequirement ? (
+                <RequirementMatch
+                  jobRequirement={selectedRequirement}
+                  candidateSkills={analysis.skills}
+                  candidateExperienceYears={analysis.workExperienceYears}
+                  onMatchCalculated={handleMatchCalculated}
+                />
+              ) : (
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center py-8">
+                      <Trophy className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium mb-2">Select a Job Requirement</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Choose a job requirement to analyze the candidate's match and generate relevant interview questions.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="interview" className="mt-4">
+            <ScrollArea className="h-[calc(100vh-12rem)]">
+              {selectedRequirement && matchResult ? (
+                matchResult.overallMatch >= 60 ? (
+                  <InterviewQuestions
+                    skills={analysis.skills}
+                    experienceLevel={analysis.experienceLevel}
+                    experienceYears={analysis.workExperienceYears}
+                    jobRequirement={selectedRequirement} // Pass the job requirement
+                  />
+                ) : (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center py-8">
+                        <XCircle className="h-12 w-12 text-red-500/50 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium mb-2">Interview Questions Not Available</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          The candidate's profile needs to match at least 60% of the job requirements to generate relevant interview questions.
+                        </p>
+                        <div className="inline-flex items-center gap-2 bg-red-50 text-red-700 px-4 py-2 rounded-lg">
+                          <span className="font-medium">Current Match:</span>
+                          <span className="text-lg font-bold">{matchResult.overallMatch}%</span>
+                          <span className="text-sm">/ Required: 60%</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              ) : (
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center py-8">
+                      <MessageSquare className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium mb-2">Select a Job Requirement First</h3>
+                      <p className="text-sm text-muted-foreground">
+                        To generate interview questions, first select a job requirement and ensure the candidate's profile matches at least 60% of the requirements.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }
