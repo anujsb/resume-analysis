@@ -77,7 +77,7 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              <Collapsible defaultOpen className="group/collapsible">
+              {/* <Collapsible defaultOpen className="group/collapsible">
                 <CollapsibleTrigger asChild>
                   <SidebarMenuItem>
                     <SidebarMenuButton className="w-full">
@@ -118,7 +118,25 @@ export function AppSidebar() {
                     </SidebarMenu>
                   </SidebarGroupContent>
                 </CollapsibleContent>
-              </Collapsible>
+              </Collapsible> */}
+
+              <SidebarMenuItem>
+                <SidebarMenuButton>
+                  <Link href="/candidates" className="flex items-center">
+                    <User className="mr-2 h-4 w-4" />
+                    Candidates
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton>
+                  <Link href="/interview" className="flex items-center">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Interview
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton>
@@ -128,6 +146,7 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
