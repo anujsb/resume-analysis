@@ -1,9 +1,9 @@
 import { Progress } from "@/components/ui/progress";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CandidateWithAnalysis } from "@/types/candidate";
 import { JobRequirement } from "@/types/job-requirements";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, Trophy } from "lucide-react";
 
 interface MatchAnalysisProps {
   candidate: CandidateWithAnalysis;
@@ -34,46 +34,81 @@ export function MatchAnalysis({ candidate, requirement }: MatchAnalysisProps) {
   );
 
   return (
-    <div className="space-y-6 p-4">
-      <div className="space-y-2">
-        <h3 className="font-semibold">Overall Match</h3>
-        <Progress value={overallMatch} className="h-2" />
-        <p className="text-sm text-muted-foreground text-right">{overallMatch}%</p>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <h3 className="font-semibold mb-2">Primary Skills</h3>
-          <div className="space-y-2">
-            {primaryMatch.skills.map((skill, index) => (
-              <div key={index} className="flex items-center gap-2">
-                {skill.matched ? (
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                ) : (
-                  <XCircle className="h-4 w-4 text-red-500" />
-                )}
-                <span className="text-sm">{skill.skill}</span>
+    <Card className="border-0 shadow-none">
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Trophy className="h-5 w-5 text-primary" />
+          Requirements Match Analysis
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <Card className="border border-muted">
+          <CardContent className="pt-6">
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm font-medium">
+                <span>Overall Match Score</span>
+                <span className="text-primary">{overallMatch}%</span>
               </div>
-            ))}
-          </div>
-        </div>
+              <Progress value={overallMatch} className="h-2" />
+              <p className="text-xs text-muted-foreground text-right">
+                Based on primary (70%) and secondary (30%) skills match
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div>
-          <h3 className="font-semibold mb-2">Secondary Skills</h3>
-          <div className="space-y-2">
-            {secondaryMatch.skills.map((skill, index) => (
-              <div key={index} className="flex items-center gap-2">
-                {skill.matched ? (
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                ) : (
-                  <XCircle className="h-4 w-4 text-red-500" />
-                )}
-                <span className="text-sm">{skill.skill}</span>
+        <div className="grid gap-6">
+          <Card className="border border-muted">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Primary Skills</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {primaryMatch.skills.map((skill, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                    <div className="flex items-center gap-2">
+                      {skill.matched ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-500" />
+                      )}
+                      <span className="text-sm font-medium">{skill.skill}</span>
+                    </div>
+                    <Badge variant={skill.matched ? "default" : "secondary"}>
+                      {skill.matched ? "Matched" : "Missing"}
+                    </Badge>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-muted">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Secondary Skills</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {secondaryMatch.skills.map((skill, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                    <div className="flex items-center gap-2">
+                      {skill.matched ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-500" />
+                      )}
+                      <span className="text-sm font-medium">{skill.skill}</span>
+                    </div>
+                    <Badge variant={skill.matched ? "default" : "secondary"}>
+                      {skill.matched ? "Matched" : "Missing"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
