@@ -10,7 +10,7 @@ import { JobRequirement } from "@/types/job-requirements";
 import { CandidateDetails } from "@/components/candidate-details";
 import { CandidateSkills } from "@/components/candidate-skills";
 import { MatchAnalysis } from "@/components/match-analysis";
-import { InterviewQuestionPanel } from "@/components/interview-question-panel";
+import { InterviewQuestions } from "@/components/interview-questions";
 
 export default function InterviewPage() {
   const [candidates, setCandidates] = useState<CandidateWithAnalysis[]>([]);
@@ -143,9 +143,11 @@ export default function InterviewPage() {
           <Card>
             <ScrollArea className="h-[calc(100vh-12rem)]">
               {selectedCandidate && selectedRequirement ? (
-                <InterviewQuestionPanel
-                  candidate={selectedCandidate}
-                  requirement={selectedRequirement}
+                <InterviewQuestions
+                  skills={selectedCandidate.analysis.skills}
+                  experienceLevel={selectedCandidate.analysis.experienceLevel}
+                  experienceYears={selectedCandidate.analysis.workExperienceYears}
+                  jobRequirement={selectedRequirement}
                 />
               ) : (
                 <div className="p-4 text-center text-muted-foreground">

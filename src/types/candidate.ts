@@ -11,11 +11,14 @@ export interface Candidate {
   createdAt: string;
 }
 
+// Add the missing SkillProficiency type
+export interface SkillProficiency {
+  skill: string;
+  proficiency: "beginner" | "intermediate" | "advanced" | "expert";
+}
+
 export interface CandidateAnalysis {
-  skills: Array<{
-    skill: string;
-    proficiency: "beginner" | "intermediate" | "advanced" | "expert";
-  }>;
+  skills: SkillProficiency[];
   experienceLevel: "fresher" | "junior" | "mediocre" | "senior";
   workExperienceYears: string;
   summary: string;

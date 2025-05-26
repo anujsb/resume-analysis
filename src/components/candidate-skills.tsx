@@ -27,7 +27,7 @@ export function CandidateSkills({ skills }: CandidateSkillsProps) {
         <div key={level} className="space-y-2">
           <h3 className="font-semibold capitalize">{level}</h3>
           <div className="flex flex-wrap gap-2">
-            {groupedSkills[level].map((skill, index) => (
+            {groupedSkills[level].map((skill: SkillProficiency, index: number) => (
               <Badge 
                 key={index} 
                 variant="secondary"

@@ -14,6 +14,8 @@ interface Question {
   category: string;
 }
 
+type ExperienceLevel = "fresher" | "junior" | "mediocre" | "senior";
+
 export function InterviewQuestionPanel({
   candidate,
   requirement
@@ -24,7 +26,7 @@ export function InterviewQuestionPanel({
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAnswers, setShowAnswers] = useState<Record<number, boolean>>({});
-  const [selectedLevel, setSelectedLevel] = useState(candidate.analysis.experienceLevel);
+  const [selectedLevel, setSelectedLevel] = useState<ExperienceLevel>(candidate.analysis.experienceLevel);
 
   const generateQuestions = async () => {
     setLoading(true);
@@ -64,6 +66,10 @@ export function InterviewQuestionPanel({
     }
   };
 
+  const handleLevelChange = (value: string) => {
+    setSelectedLevel(value as ExperienceLevel);
+  };
+
   return (
     <Card className="border-0 shadow-none">
       <CardHeader>
@@ -76,7 +82,7 @@ export function InterviewQuestionPanel({
         <div className="flex justify-between items-center">
           <Select
             value={selectedLevel}
-            onValueChange={setSelectedLevel}
+            onValueChange={handleLevelChange}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Experience Level" />
