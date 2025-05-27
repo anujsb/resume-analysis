@@ -22,9 +22,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+type CandidateStatus = "new" | "rejected" | "hold" | "selected";
+
 export default function CandidatesListPage() {
   const [candidates, setCandidates] = useState<CandidateWithAnalysis[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [remarkInputs, setRemarkInputs] = useState<{[key: number]: string}>({})
+  const [statusUpdating, setStatusUpdating] = useState<{[key: number]: boolean}>({})
+  const [remarkSaving, setRemarkSaving] = useState<{[key: number]: boolean}>({})
 
   useEffect(() => {
     loadCandidates()
@@ -36,6 +41,12 @@ export default function CandidatesListPage() {
       const data = await response.json()
       if (data.success) {
         setCandidates(data.data)
+        // Initialize remark inputs with current values
+        const initialRemarks: {[key: number]: string} = {}
+        data.data.forEach((item: CandidateWithAnalysis) => {
+          initialRemarks[item.candidate.id] = item.candidate.remark || ""
+        })
+        setRemarkInputs(initialRemarks)
       }
     } catch (error) {
       console.error("Failed to load candidates:", error)
@@ -44,42 +55,78 @@ export default function CandidatesListPage() {
     }
   }
 
-  const updateCandidateStatus = async (id: number, status: string) => {
+  const updateCandidateStatus = async (id: number, status: CandidateStatus) => {
+    setStatusUpdating(prev => ({ ...prev, [id]: true }))
+    
     try {
       const response = await fetch(`/api/candidates/${id}/status`, {
         method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ status }),
       })
       if (response.ok) {
-        loadCandidates()
+        // Update local state immediately for better UX
+        setCandidates(prev => prev.map(item => 
+          item.candidate.id === id 
+            ? { ...item, candidate: { ...item.candidate, status } }
+            : item
+        ))
+      } else {
+        console.error("Failed to update status:", await response.text())
       }
     } catch (error) {
       console.error("Failed to update status:", error)
+    } finally {
+      setStatusUpdating(prev => ({ ...prev, [id]: false }))
     }
   }
 
-  const updateCandidateRemark = async (id: number, remark: string) => {
+  const handleRemarkChange = (id: number, value: string) => {
+    setRemarkInputs(prev => ({
+      ...prev,
+      [id]: value
+    }))
+  }
+
+  const saveRemark = async (id: number) => {
+    const remark = remarkInputs[id] || ""
+    setRemarkSaving(prev => ({ ...prev, [id]: true }))
+    
     try {
       const response = await fetch(`/api/candidates/${id}/remark`, {
         method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ remark }),
       })
       if (response.ok) {
-        loadCandidates()
+        // Update local state immediately
+        setCandidates(prev => prev.map(item => 
+          item.candidate.id === id 
+            ? { ...item, candidate: { ...item.candidate, remark } }
+            : item
+        ))
+      } else {
+        console.error("Failed to update remark:", await response.text())
       }
     } catch (error) {
       console.error("Failed to update remark:", error)
+    } finally {
+      setRemarkSaving(prev => ({ ...prev, [id]: false }))
     }
   }
 
-  const getStatusBadgeColor = (status: string) => {
+  const getStatusBadgeColor = (status: CandidateStatus) => {
     const colors = {
       new: "bg-blue-100 text-blue-800",
       rejected: "bg-red-100 text-red-800",
       hold: "bg-yellow-100 text-yellow-800",
       selected: "bg-green-100 text-green-800",
     }
-    return colors[status as keyof typeof colors] || colors.new
+    return colors[status] || colors.new
   }
 
   if (isLoading) {
@@ -101,7 +148,7 @@ export default function CandidatesListPage() {
               <TableHead>Name</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Remark</TableHead>
+              <TableHead className="w-[300px]">Remark</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -120,28 +167,64 @@ export default function CandidatesListPage() {
                   {new Date(item.candidate.createdAt).toLocaleDateString()}
                 </TableCell>
                 <TableCell>
-                  <Select
-                    defaultValue={item.candidate.status}
-                    onValueChange={(value) => updateCandidateStatus(item.candidate.id, value)}
-                  >
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                      <SelectItem value="hold">Hold</SelectItem>
-                      <SelectItem value="selected">Selected</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={item.candidate.status}
+                      onValueChange={(value) => updateCandidateStatus(item.candidate.id, value as CandidateStatus)}
+                      disabled={statusUpdating[item.candidate.id]}
+                    >
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="new">New</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                        <SelectItem value="hold">Hold</SelectItem>
+                        <SelectItem value="selected">Selected</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {statusUpdating[item.candidate.id] ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Badge className={getStatusBadgeColor(item.candidate.status)}>
+                        {item.candidate.status}
+                      </Badge>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>
-                  <Input
-                    placeholder="Add remark..."
-                    value={item.candidate.remark || ""}
-                    onChange={(e) => updateCandidateRemark(item.candidate.id, e.target.value)}
-                    className="text-sm"
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder="Add remark..."
+                      value={remarkInputs[item.candidate.id] || ""}
+                      onChange={(e) => handleRemarkChange(item.candidate.id, e.target.value)}
+                      className="text-sm flex-1"
+                      disabled={remarkSaving[item.candidate.id]}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !remarkSaving[item.candidate.id]) {
+                          saveRemark(item.candidate.id)
+                        }
+                      }}
+                    />
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => saveRemark(item.candidate.id)}
+                      disabled={
+                        remarkInputs[item.candidate.id] === item.candidate.remark ||
+                        remarkSaving[item.candidate.id]
+                      }
+                    >
+                      {remarkSaving[item.candidate.id] ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save"
+                      )}
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

@@ -1,3 +1,4 @@
+// src/app/interview/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -48,6 +49,16 @@ export default function InterviewPage() {
     loadData();
   }, []);
 
+  const handleCandidateUpdate = (updatedCandidate: CandidateWithAnalysis) => {
+    // Update the selected candidate
+    setSelectedCandidate(updatedCandidate);
+    
+    // Update the candidates list
+    setCandidates(prev => prev.map(c => 
+      c.candidate.id === updatedCandidate.candidate.id ? updatedCandidate : c
+    ));
+  };
+
   return (
     <div className="container mx-auto py-6">
       <Card className="mb-6">
@@ -62,6 +73,7 @@ export default function InterviewPage() {
                 if (candidate) setSelectedCandidate(candidate);
               }}
               disabled={isLoading}
+              value={selectedCandidate?.candidate.id.toString() || ""}
             >
               <SelectTrigger className="w-[300px]">
                 <SelectValue placeholder="Select candidate" />
@@ -72,7 +84,7 @@ export default function InterviewPage() {
                     key={candidate.candidate.id} 
                     value={candidate.candidate.id.toString()}
                   >
-                    {candidate.candidate.name}
+                    {candidate.candidate.name} ({candidate.candidate.status})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -84,6 +96,7 @@ export default function InterviewPage() {
                 if (requirement) setSelectedRequirement(requirement);
               }}
               disabled={isLoading}
+              value={selectedRequirement?.id?.toString() || ""}
             >
               <SelectTrigger className="w-[300px]">
                 <SelectValue placeholder="Select job requirement" />
@@ -116,7 +129,10 @@ export default function InterviewPage() {
 
               <ScrollArea className="h-[calc(100vh-16rem)]">
                 <TabsContent value="details">
-                  <CandidateDetails candidate={selectedCandidate} />
+                  <CandidateDetails 
+                    candidate={selectedCandidate} 
+                    onCandidateUpdate={handleCandidateUpdate}
+                  />
                 </TabsContent>
 
                 <TabsContent value="skills">

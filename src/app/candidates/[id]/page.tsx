@@ -1,3 +1,4 @@
+// src/app/candidates/[id]/page.tsx
 "use client"
 
 import { useEffect, useState } from "react"
@@ -8,8 +9,11 @@ import { Loader2, Bookmark, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { AnalysisResult } from "@/components/analysis-result"
+
+type CandidateStatus = "new" | "rejected" | "hold" | "selected";
 
 export default function CandidatePage() {
   const params = useParams()
@@ -60,6 +64,16 @@ export default function CandidatePage() {
       .substring(0, 2)
   }
 
+  const getStatusBadgeColor = (status: CandidateStatus) => {
+    const colors = {
+      new: "bg-blue-100 text-blue-800",
+      rejected: "bg-red-100 text-red-800", 
+      hold: "bg-yellow-100 text-yellow-800",
+      selected: "bg-green-100 text-green-800",
+    }
+    return colors[status] || colors.new
+  }
+
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -95,11 +109,16 @@ export default function CandidatePage() {
             </Avatar>
             <div>
               <h1 className="text-2xl font-bold">{candidate.candidate.name}</h1>
-              <p className="text-muted-foreground">
-                {candidate.analysis.experienceLevel.charAt(0).toUpperCase() + 
-                 candidate.analysis.experienceLevel.slice(1)} • 
-                {candidate.analysis.workExperienceYears} years experience
-              </p>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-muted-foreground">
+                  {candidate.analysis.experienceLevel.charAt(0).toUpperCase() + 
+                   candidate.analysis.experienceLevel.slice(1)} • 
+                  {candidate.analysis.workExperienceYears} years experience
+                </p>
+                <Badge className={getStatusBadgeColor(candidate.candidate.status as CandidateStatus)}>
+                  {candidate.candidate.status}
+                </Badge>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -116,6 +135,16 @@ export default function CandidatePage() {
             </Button>
           </div>
         </div>
+
+        {/* Status and Remark Display */}
+        {candidate.candidate.remark && (
+          <Card className="mb-4 bg-blue-50 border-blue-200">
+            <div className="p-4">
+              <h3 className="font-semibold text-blue-900 mb-2">Remarks</h3>
+              <p className="text-blue-800 text-sm">{candidate.candidate.remark}</p>
+            </div>
+          </Card>
+        )}
         
         <Separator className="my-4" />
         
