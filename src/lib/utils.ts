@@ -31,7 +31,7 @@
 //     // Use Gemini API directly to extract text from PDF
 //     // This approach leverages Gemini's ability to process PDFs without needing
 //     // to store the file or use a PDF-specific library
-//     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+//     const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
 //     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
 //     const base64String = Buffer.from(arrayBuffer).toString("base64");
@@ -118,7 +118,7 @@ async function extractTextFromPdf(file: File): Promise<string> {
     const arrayBuffer = await file.arrayBuffer();
     
     // Use Gemini API to extract text from PDF
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+    const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
     const prompt = "Extract all text from this PDF document. Return only the raw text content with proper spacing and paragraph breaks.";

@@ -41,7 +41,7 @@ export interface RequirementMatchResult {
 
 // Initialize Gemini AI
 export function getGeminiClient() {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
   
   if (!apiKey) {
     throw new Error("Gemini API key is missing. Please check your .env.local file.");
@@ -148,4 +148,25 @@ export async function matchRequirements(
     matchedSkills,
     experienceMatch
   };
+}
+
+export async function translateText(text: string): Promise<string> {
+  try {
+    const genAI = getGeminiClient();
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const prompt = `
+      Translate the following text to English. If the text is already in English, return it as is.
+      Keep the formatting (newlines, spacing) intact as much as possible.
+
+      Text to translate:
+      ${text}
+    `;
+
+    const result = await model.generateContent(prompt);
+    return result.response.text();
+  } catch (error) {
+    console.error("Error translating text:", error);
+    throw new Error(`Failed to translate text: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
 }

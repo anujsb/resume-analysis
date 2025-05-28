@@ -23,7 +23,8 @@ import {
   GraduationCap,
   XCircle,
   Trophy,
-  MessageSquare
+  MessageSquare,
+  Globe
 } from "lucide-react";
 import { RequirementMatch } from "./requirement-match";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -34,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { JobRequirement } from "@/types/job-requirements";
 import { MatchResult } from "@/types/matching";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { translateText } from "@/lib/gemini";
 
 interface SkillProficiency {
   skill: string;
@@ -70,9 +72,23 @@ export function AnalysisResult({
   );
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
   const [activeTab, setActiveTab] = useState("match");
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translatedText, setTranslatedText] = useState<string | null>(null);
 
   const handleMatchCalculated = (result: MatchResult) => {
     setMatchResult(result);
+  };
+
+  const handleTranslate = async () => {
+    try {
+      setIsTranslating(true);
+      const translated = await translateText(candidate.resumeText);
+      setTranslatedText(translated);
+    } catch (error) {
+      console.error("Translation failed:", error);
+    } finally {
+      setIsTranslating(false);
+    }
   };
 
   const proficiencyColor = {
@@ -180,9 +196,30 @@ export function AnalysisResult({
         {/* Full Resume */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
-              Full Resume
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                Full Resume
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTranslate}
+                disabled={isTranslating}
+                className="flex items-center gap-2"
+              >
+                <Globe className="h-4 w-4" />
+                {isTranslating ? (
+                  <>
+                    <span className="animate-spin mr-2">⟳</span>
+                    Translating...
+                  </>
+                ) : (
+                  <>
+                    Translate
+                  </>
+                )}
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -190,7 +227,7 @@ export function AnalysisResult({
               <pre className={`whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg ${
                 !showFullText ? "max-h-40 overflow-hidden" : ""
               }`}>
-                {candidate.resumeText}
+                {translatedText || candidate.resumeText}
               </pre>
               {!showFullText && (
                 <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-background to-transparent" />

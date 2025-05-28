@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { CandidateWithAnalysis, CandidateStatus } from "@/types/candidate";
-import { Mail, Phone, Save } from "lucide-react";
+import { Mail, Phone, Save, Globe } from "lucide-react";
+import { translateText } from "@/lib/gemini";
 import { ExperienceLevelBadge } from "./experience-level-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,8 @@ export function CandidateDetails({ candidate, onCandidateUpdate }: CandidateDeta
   const [currentStatus, setCurrentStatus] = useState<CandidateStatus>(candidate.candidate.status as CandidateStatus);
   const [currentRemark, setCurrentRemark] = useState(candidate.candidate.remark || "");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translatedText, setTranslatedText] = useState<string | null>(null);
 
   const handleSave = async () => {
     setIsUpdating(true);
@@ -50,6 +53,18 @@ export function CandidateDetails({ candidate, onCandidateUpdate }: CandidateDeta
       console.error("Error updating candidate:", error);
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleTranslate = async () => {
+    try {
+      setIsTranslating(true);
+      const translated = await translateText(candidate.candidate.resumeText);
+      setTranslatedText(translated);
+    } catch (error) {
+      console.error("Translation failed:", error);
+    } finally {
+      setIsTranslating(false);
     }
   };
 
@@ -154,12 +169,52 @@ export function CandidateDetails({ candidate, onCandidateUpdate }: CandidateDeta
 
       {/* Resume Content */}
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-gray-700">Resume Content</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium text-gray-700">Resume Content</h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleTranslate}
+            disabled={isTranslating}
+            className="flex items-center gap-2"
+          >
+            <Globe className="h-4 w-4" />
+            {isTranslating ? (
+              <>
+                <span className="animate-spin mr-2">⟳</span>
+                Translating...
+              </>
+            ) : (
+              "Translate"
+            )}
+          </Button>
+        </div>
         <div className="max-h-80 overflow-y-auto">
           <pre className="text-sm text-gray-600 bg-gray-50 p-4 rounded-md whitespace-pre-wrap">
-            {candidate.candidate.resumeText || "No resume content available"}
+            {translatedText || candidate.candidate.resumeText || "No resume content available"}
           </pre>
         </div>
+      </div>
+
+      {/* Translation Section */}
+      <div className="space-y-2">
+        <h3 className="text-sm font-medium text-gray-700">Translation</h3>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Button
+            onClick={handleTranslate}
+            disabled={isTranslating || !candidate.candidate.resumeText}
+            size="sm"
+            className="w-fit"
+          >
+            <Globe className="h-4 w-4 mr-2" />
+            {isTranslating ? "Translating..." : "Translate Resume"}
+          </Button>
+        </div>
+        {translatedText && (
+          <p className="text-sm text-gray-600 bg-gray-50 p-4 rounded-md whitespace-pre-wrap">
+            {translatedText}
+          </p>
+        )}
       </div>
     </CardContent>
   );
