@@ -233,10 +233,35 @@
 // import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 // import { Badge } from "@/components/ui/badge";
 
+'use client';
 
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { Spinner } from '@/components/ui/spinner';
 
-import { redirect } from 'next/navigation';
+export default function RootPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
-export default function Home() {
-  redirect('/dashboard');
+  useEffect(() => {
+    if (status === 'loading') return;
+
+    if (!session) {
+      router.push('/auth/login');
+      return;
+    }
+
+    if (session.user?.role === 'candidate') {
+      router.push('/profile');
+    } else if (session.user?.role === 'recruiter') {
+      router.push('/dashboard');
+    }
+  }, [session, status, router]);
+
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <Spinner className="h-8 w-8 animate-spin" />
+    </div>
+  );
 }

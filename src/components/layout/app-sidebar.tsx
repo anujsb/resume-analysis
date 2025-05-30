@@ -5,6 +5,8 @@ import { ChevronDown, User } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { CandidateWithAnalysis } from "@/types/candidate"
+import { useSession, signOut } from "next-auth/react"
+import { Button } from "@/components/ui/button"
 
 import {
   Sidebar,
@@ -17,14 +19,19 @@ import {
   SidebarMenuItem,
   SidebarMenuSkeleton,
 } from "@/components/ui/sidebar"
-// import { navigation } from "@/config/navigation"
+import { recruiterNavigation, candidateNavigation } from "@/config/navigation"
 import Link from "next/link"
 
 export function AppSidebar() {
+  const { data: session } = useSession()
   const [candidates, setCandidates] = useState<CandidateWithAnalysis[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
+  const navigation = session?.user?.role === 'candidate' ? candidateNavigation : recruiterNavigation
+
   useEffect(() => {
+    if (session?.user?.role !== 'recruiter') return;
+
     const loadCandidates = async () => {
       setIsLoading(true)
       try {
@@ -41,7 +48,7 @@ export function AppSidebar() {
     }
 
     loadCandidates()
-  }, [])
+  }, [session])
 
   const getInitials = (name: string): string => {
     return name
@@ -49,8 +56,9 @@ export function AppSidebar() {
       .map(word => word[0])
       .join('')
       .toUpperCase()
-      .substring(0, 2)
   }
+
+  if (!session) return null;
 
   return (
     <Sidebar collapsible="icon" variant="floating">
@@ -59,94 +67,38 @@ export function AppSidebar() {
           <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              {navigation.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton>
+                    <Link href={item.href} className="flex items-center">
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {item.title}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupContent>
+            <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton>
-                  <Link href="/dashboard" className="flex items-center">
-                    <Home className="mr-2 h-4 w-4" />
-                    Dashboard
-                  </Link>
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <span className="ml-2">Signed in as {session.user?.name}</span>
+                  </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-
               <SidebarMenuItem>
-                <SidebarMenuButton>
-                  <Link href="/requirements" className="flex items-center">
-                    <Inbox className="mr-2 h-4 w-4" />
-                    Job Requirements
-                  </Link>
+                <SidebarMenuButton onClick={() => signOut()}>
+                  <div className="flex items-center text-red-600">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Logout
+                  </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-
-              {/* <Collapsible defaultOpen className="group/collapsible">
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton className="w-full">
-                      <div className="flex w-full items-center">
-                        <a href="/candidates" className="flex w-full items-center">
-                          <User className="mr-2 h-4 w-4" />
-                          <span>Candidates</span>
-                        </a>
-                        <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                      </div>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </CollapsibleTrigger>
-
-                <CollapsibleContent>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      {isLoading ? (
-                        Array.from({ length: 3 }).map((_, i) => (
-                          <SidebarMenuSkeleton key={i} showIcon />
-                        ))
-                      ) : (
-                        candidates.map((item) => (
-                          <SidebarMenuItem key={item.candidate.id}>
-                            <SidebarMenuButton asChild>
-                              <Link href={`/candidates/${item.candidate.id}`}>
-                                <Avatar className="h-6 w-6">
-                                  <AvatarFallback className="text-xs">
-                                    {getInitials(item.candidate.name)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span>{item.candidate.name}</span>
-                              </Link>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        ))
-                      )}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </CollapsibleContent>
-              </Collapsible> */}
-
-              <SidebarMenuItem>
-                <SidebarMenuButton>
-                  <Link href="/candidates" className="flex items-center">
-                    <User className="mr-2 h-4 w-4" />
-                    Candidates
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton>
-                  <Link href="/interview" className="flex items-center">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Interview
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton>
-                  <Link href="/reports" className="flex items-center">
-                    <FormInput className="mr-2 h-4 w-4" />
-                    Reports
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

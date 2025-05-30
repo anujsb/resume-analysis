@@ -1,5 +1,5 @@
 // src/lib/db/schema.ts
-import { serial, text, timestamp, pgTable, jsonb, integer } from "drizzle-orm/pg-core";
+import { serial, text, timestamp, pgTable, jsonb, integer, boolean } from "drizzle-orm/pg-core";
 
 export const candidates = pgTable("candidates", {
   id: serial("id").primaryKey(),
@@ -34,6 +34,23 @@ export const jobRequirements = pgTable("job_requirements", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(), // This will store hashed passwords
+  role: text("role").notNull(), // 'candidate' or 'recruiter'
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const recruiters = pgTable("recruiters", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  company: text("company"),
+  position: text("position"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Types for TypeScript
 export type Candidate = typeof candidates.$inferSelect;
 export type NewCandidate = typeof candidates.$inferInsert;
@@ -43,3 +60,9 @@ export type NewAnalysis = typeof analyses.$inferInsert;
 
 export type JobRequirement = typeof jobRequirements.$inferSelect;
 export type NewJobRequirement = typeof jobRequirements.$inferInsert;
+
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+
+export type Recruiter = typeof recruiters.$inferSelect;
+export type NewRecruiter = typeof recruiters.$inferInsert;
