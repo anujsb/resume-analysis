@@ -19,6 +19,7 @@ export const analyses = pgTable("analyses", {
   experienceLevel: text("experience_level").notNull(), // "fresher", "junior", "mediocre", "senior"
   workExperienceYears: text("work_experience_years").notNull(), // String representation for flexibility
   summary: text("summary"),
+  matchPercentage: integer("match_percentage"), // Add match percentage
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -51,6 +52,22 @@ export const recruiters = pgTable("recruiters", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// New table for candidate profiles linked to users
+export const candidateProfiles = pgTable("candidate_profiles", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull().unique(), // One profile per user
+  name: text("name").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  resumeText: text("resume_text").notNull(),
+  skills: jsonb("skills").notNull(), // Array of {skill: string, proficiency: string}
+  experienceLevel: text("experience_level").notNull(), // "fresher", "junior", "mediocre", "senior"
+  workExperienceYears: text("work_experience_years").notNull(),
+  summary: text("summary"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Types for TypeScript
 export type Candidate = typeof candidates.$inferSelect;
 export type NewCandidate = typeof candidates.$inferInsert;
@@ -66,3 +83,12 @@ export type NewUser = typeof users.$inferInsert;
 
 export type Recruiter = typeof recruiters.$inferSelect;
 export type NewRecruiter = typeof recruiters.$inferInsert;
+
+export type CandidateProfile = typeof candidateProfiles.$inferSelect;
+export type NewCandidateProfile = typeof candidateProfiles.$inferInsert;
+
+// Type for candidate with analysis (existing functionality)
+export type CandidateWithAnalysis = {
+  candidate: Candidate;
+  analysis: Analysis;
+};
