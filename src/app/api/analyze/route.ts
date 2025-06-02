@@ -33,10 +33,10 @@ export async function POST(request: NextRequest) {
     const candidatesRepo = new CandidatesRepository();
     
     const candidate = await candidatesRepo.createCandidate({
-      name: analysis.name ?? "Unknown", // Provide a default value for name
+      name: analysis.name ?? "Unknown",
       email: analysis.email || null,
       phone: analysis.phone || null,
-      resumeText: analysis.rawText,
+      resumeText: text, // Store the full resume text
     });
     
     const savedAnalysis = await candidatesRepo.createAnalysis({
@@ -45,6 +45,8 @@ export async function POST(request: NextRequest) {
       experienceLevel: analysis.experienceLevel,
       workExperienceYears: analysis.experienceYears.toString(),
       summary: analysis.summary,
+      professionalProfile: analysis.summary, // Use summary as professional profile initially
+      fullResume: text, // Store the full resume text
     });
     
     return NextResponse.json({

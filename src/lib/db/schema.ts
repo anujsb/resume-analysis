@@ -19,6 +19,8 @@ export const analyses = pgTable("analyses", {
   experienceLevel: text("experience_level").notNull(), // "fresher", "junior", "mediocre", "senior"
   workExperienceYears: text("work_experience_years").notNull(), // String representation for flexibility
   summary: text("summary"),
+  professionalProfile: text("professional_profile"),
+  fullResume: text("full_resume"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

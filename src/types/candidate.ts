@@ -1,3 +1,5 @@
+import { Analysis } from "@/lib/db/schema";
+
 export type CandidateStatus = "new" | "rejected" | "hold" | "selected";
 
 export interface Candidate {
@@ -14,7 +16,7 @@ export interface Candidate {
 // Add the missing SkillProficiency type
 export interface SkillProficiency {
   skill: string;
-  proficiency: "beginner" | "intermediate" | "advanced" | "expert";
+  proficiency: string;
 }
 
 export interface CandidateAnalysis {
@@ -27,4 +29,22 @@ export interface CandidateAnalysis {
 export interface CandidateWithAnalysis {
   candidate: Candidate;
   analysis: CandidateAnalysis;
+}
+
+export interface EnhancedProfile {
+  professionalProfile: string;
+  skillsMatrix: SkillProficiency[];
+  fullResume: string;
+}
+
+export interface ProfileAnalysis extends Analysis {
+  enhancedProfile?: EnhancedProfile;
+  skills: SkillProficiency[];
+  experienceLevel: string;
+  workExperienceYears: string;
+  summary: string;
+}
+
+export interface CandidateWithProfile extends CandidateWithAnalysis {
+  analysis: ProfileAnalysis;
 }

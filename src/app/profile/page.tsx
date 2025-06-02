@@ -1,24 +1,39 @@
 'use client';
 
 import { useSession } from "next-auth/react";
-import { useState } from "react";
-import ProtectedRoute from "@/components/protected-route";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ResumeUploader } from "@/components/resume-uploader";
+import { useState, useEffect } from "react";
 import { Analysis } from "@/lib/db/schema";
-
-interface Skill {
-  skill: string;
-  proficiency: string;
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import ProtectedRoute from "@/components/protected-route";
+import { EnhancedProfile } from "@/components/enhanced-profile";
+import { ProfileAnalysis } from "@/types/candidate";
 
 export default function ProfilePage() {
   const { data: session } = useSession();
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
 
-  const handleAnalysisComplete = (newAnalysis: Analysis) => {
+  const handleAnalysisComplete = (newAnalysis: ProfileAnalysis) => {
     setAnalysis(newAnalysis);
   };
+
+  // Fetch existing analysis when the component mounts
+  useEffect(() => {
+    const fetchAnalysis = async () => {
+      try {
+        const response = await fetch('/api/profile');
+        const data = await response.json();
+        if (data.success && data.data?.analysis) {
+          setAnalysis(data.data.analysis);
+        }
+      } catch (error) {
+        console.error('Failed to fetch analysis:', error);
+      }
+    };
+
+    if (session?.user) {
+      fetchAnalysis();
+    }
+  }, [session]);
 
   return (
     <ProtectedRoute allowedRoles={["candidate"]}>
@@ -43,55 +58,10 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Resume</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResumeUploader onAnalysisComplete={handleAnalysisComplete} />
-            </CardContent>
-          </Card>
-
-          {analysis && (
-            <>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Experience & Skills</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4">
-                    <div>
-                      <span className="font-medium">Experience Level:</span>
-                      <span className="ml-2">{analysis.experienceLevel}</span>
-                    </div>
-                    <div>
-                      <span className="font-medium">Years of Experience:</span>
-                      <span className="ml-2">{analysis.workExperienceYears}</span>
-                    </div>
-                    <div>
-                      <span className="font-medium">Skills:</span>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {(analysis.skills as Skill[]).map((skill, index) => (
-                          <div key={index} className="rounded-full bg-gray-100 px-3 py-1 text-sm">
-                            {skill.skill} ({skill.proficiency})
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Professional Summary</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="whitespace-pre-wrap">{analysis.summary}</p>
-                </CardContent>
-              </Card>
-            </>
-          )}
+          <EnhancedProfile 
+            analysis={analysis}
+            onAnalysisComplete={handleAnalysisComplete}
+          />
         </div>
       </div>
     </ProtectedRoute>

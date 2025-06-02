@@ -21,9 +21,23 @@ export class CandidatesRepository {
     return await db.select().from(candidates).orderBy(candidates.createdAt);
   }
 
-  // Create analysis for a candidate
+  // Create analysis for a candidate with enhanced profile
   async createAnalysis(analysis: NewAnalysis): Promise<Analysis> {
-    const result = await db.insert(analyses).values(analysis).returning();
+    const result = await db.insert(analyses).values({
+      ...analysis,
+      professionalProfile: analysis.professionalProfile || analysis.summary,
+      fullResume: analysis.fullResume || analysis.summary
+    }).returning();
+    return result[0];
+  }
+
+  // Update analysis for a candidate
+  async updateAnalysis(candidateId: number, analysis: Partial<NewAnalysis>): Promise<Analysis> {
+    const result = await db
+      .update(analyses)
+      .set(analysis)
+      .where(eq(analyses.candidateId, candidateId))
+      .returning();
     return result[0];
   }
 
@@ -33,7 +47,7 @@ export class CandidatesRepository {
     return result[0];
   }
 
-  // Get candidate with analysis
+  // Get candidate with enhanced profile analysis
   async getCandidateWithAnalysis(id: number): Promise<{ candidate: Candidate; analysis?: Analysis }> {
     const candidate = await this.getCandidateById(id);
     
@@ -45,7 +59,11 @@ export class CandidatesRepository {
     
     return {
       candidate,
-      analysis,
+      analysis: analysis ? {
+        ...analysis,
+        professionalProfile: analysis.professionalProfile || analysis.summary,
+        fullResume: analysis.fullResume || candidate.resumeText
+      } : undefined
     };
   }
 
