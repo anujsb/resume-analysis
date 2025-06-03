@@ -23,19 +23,34 @@ export class CandidatesRepository {
 
   // Create analysis for a candidate with enhanced profile
   async createAnalysis(analysis: NewAnalysis): Promise<Analysis> {
+    const enhancedData = {
+      professionalProfile: analysis.professionalProfile || analysis.summary,
+      fullResume: analysis.fullResume || "",
+      lastUpdated: new Date().toISOString()
+    };
+
     const result = await db.insert(analyses).values({
       ...analysis,
-      professionalProfile: analysis.professionalProfile || analysis.summary,
-      fullResume: analysis.fullResume || analysis.summary
+      enhancedData
     }).returning();
     return result[0];
   }
 
-  // Update analysis for a candidate
+  // Update existing analysis with enhanced profile
   async updateAnalysis(candidateId: number, analysis: Partial<NewAnalysis>): Promise<Analysis> {
+    const currentAnalysis = await this.getAnalysisByCandidateId(candidateId);
+    const enhancedData = {
+      professionalProfile: analysis.professionalProfile || analysis.summary || currentAnalysis?.professionalProfile,
+      fullResume: analysis.fullResume || currentAnalysis?.fullResume,
+      lastUpdated: new Date().toISOString()
+    };
+
     const result = await db
       .update(analyses)
-      .set(analysis)
+      .set({
+        ...analysis,
+        enhancedData
+      })
       .where(eq(analyses.candidateId, candidateId))
       .returning();
     return result[0];
@@ -47,7 +62,7 @@ export class CandidatesRepository {
     return result[0];
   }
 
-  // Get candidate with enhanced profile analysis
+  // Get candidate with analysis and enhanced profile
   async getCandidateWithAnalysis(id: number): Promise<{ candidate: Candidate; analysis?: Analysis }> {
     const candidate = await this.getCandidateById(id);
     
@@ -61,8 +76,8 @@ export class CandidatesRepository {
       candidate,
       analysis: analysis ? {
         ...analysis,
-        professionalProfile: analysis.professionalProfile || analysis.summary,
-        fullResume: analysis.fullResume || candidate.resumeText
+        professionalProfile: (analysis.enhancedData as any)?.professionalProfile || analysis.summary,
+        fullResume: (analysis.enhancedData as any)?.fullResume || candidate.resumeText
       } : undefined
     };
   }

@@ -21,6 +21,7 @@ export const analyses = pgTable("analyses", {
   summary: text("summary"),
   professionalProfile: text("professional_profile"),
   fullResume: text("full_resume"),
+  enhancedData: jsonb("enhanced_data"), // Store any additional profile data
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

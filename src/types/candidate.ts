@@ -40,7 +40,7 @@ export interface EnhancedProfile {
 export interface ProfileAnalysis extends Analysis {
   enhancedProfile?: EnhancedProfile;
   skills: SkillProficiency[];
-  experienceLevel: string;
+  experienceLevel: "fresher" | "junior" | "mediocre" | "senior";
   workExperienceYears: string;
   summary: string;
 }

@@ -6,21 +6,27 @@ import { CandidatesRepository } from "@/lib/repository/candidates-repository";
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
+    const candidatesRepo = new CandidatesRepository();
+    let userCandidate = null;
     
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+    // First try to find by session email if available
+    if (session?.user?.email) {
+      const candidates = await candidatesRepo.getAllCandidatesWithAnalyses();
+      userCandidate = candidates.find(c => 
+        c.candidate.email === session.user.email
       );
     }
-
-    const candidatesRepo = new CandidatesRepository();
-    const candidates = await candidatesRepo.getAllCandidatesWithAnalyses();
     
-    // Find the candidate associated with the current user's email
-    const userCandidate = candidates.find(c => 
-      c.candidate.email === session.user.email
-    );
+    // If no candidate found by email, get the most recent one
+    if (!userCandidate) {
+      const candidates = await candidatesRepo.getAllCandidatesWithAnalyses();
+      if (candidates.length > 0) {
+        // Get the most recent candidate based on creation date
+        userCandidate = candidates.sort((a, b) => 
+          new Date(b.candidate.createdAt).getTime() - new Date(a.candidate.createdAt).getTime()
+        )[0];
+      }
+    }
 
     if (!userCandidate) {
       return NextResponse.json({
@@ -29,10 +35,23 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({
+    // Format the response with enhanced data
+    const response = {
       success: true,
-      data: userCandidate
-    });
+      data: {
+        candidate: userCandidate.candidate,
+        analysis: {
+          ...userCandidate.analysis,
+          enhancedData: userCandidate.analysis?.enhancedData || {
+            professionalProfile: userCandidate.analysis?.summary,
+            fullResume: userCandidate.candidate.resumeText,
+            lastUpdated: userCandidate.analysis?.createdAt
+          }
+        }
+      }
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error("Error fetching profile:", error);
     return NextResponse.json(

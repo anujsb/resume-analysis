@@ -40,5 +40,17 @@ export const candidateNavigation = [
     href: "/profile",
     icon: UserIcon,
     description: "View and update profile"
+  },
+  {
+    title: "Resume Improvement",
+    href: "/resume-improvement",
+    icon: HomeIcon,
+    description: "Get suggestions to improve your resume"
+  },
+  {
+    title: "Cover Letter",
+    href: "/cover-letter",
+    icon: BriefcaseIcon,
+    description: "Generate cover letters"
   }
 ];
