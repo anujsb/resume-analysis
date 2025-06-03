@@ -99,7 +99,8 @@ export default function DashboardPage() {
   }, []);
 
   const handleAnalysisComplete = (data: any) => {
-    router.push(`/candidates?id=${data.candidate.id}`);
+    // router.push(`/candidates?id=${data.candidate.id}`);
+    router.push(`/candidates/${data.candidate.id}`);
   };
 
   const getActivityIcon = (type: string) => {
