@@ -12,12 +12,12 @@ import ProtectedRoute from "@/components/protected-route";
 import { JobRequirement } from "@/types/job-requirements";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { 
-  FileText, 
-  Briefcase, 
-  Sparkles, 
-  Copy, 
-  Download, 
+import {
+  FileText,
+  Briefcase,
+  Sparkles,
+  Copy,
+  Download,
   RefreshCw,
   CheckCircle,
   User,
@@ -123,7 +123,9 @@ export default function CoverLetterPage() {
 
   return (
     <ProtectedRoute allowedRoles={["candidate"]}>
-      <div className="min-h-screen border rounded-2xl bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* <div className="min-h-screen border rounded-2xl bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50"> */}
+      <div className="min-h-screen ">
+
         <div className="container mx-auto py-8 px-4">
           {/* Header Section */}
           <div className="text-center mb-8">
@@ -199,8 +201,8 @@ export default function CoverLetterPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {requirements.map((req) => (
-                        <SelectItem 
-                          key={req.id} 
+                        <SelectItem
+                          key={req.id}
                           value={req.id?.toString() || ''}
                           className="py-3"
                         >

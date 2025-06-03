@@ -308,7 +308,7 @@ export default function DashboardPage() {
                 <Button
                   variant="outline"
                   className="h-16 flex flex-col gap-2 hover:bg-purple-50 hover:border-purple-300 transition-colors"
-                  onClick={() => router.push('/job-requirements')}
+                  onClick={() => router.push('/requirements')}
                 >
                   <BriefcaseIcon className="h-5 w-5" />
                   <span className="text-sm font-medium">Manage Requirements</span>
@@ -316,7 +316,7 @@ export default function DashboardPage() {
                 <Button
                   variant="outline"
                   className="h-16 flex flex-col gap-2 hover:bg-green-50 hover:border-green-300 transition-colors"
-                  onClick={() => router.push('/analytics')}
+                  onClick={() => router.push('/reports')}
                 >
                   <PieChartIcon className="h-5 w-5" />
                   <span className="text-sm font-medium">View Analytics</span>

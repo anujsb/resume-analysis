@@ -169,7 +169,8 @@ export default function ResumeImprovementPage() {
   if (loading) {
     return (
       <ProtectedRoute allowedRoles={["candidate"]}>
-        <div className="min-h-screen border rounded-2xl bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="min-h-screen flex items-center justify-center">
+        {/* <div className="min-h-screen border rounded-2xl bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 flex items-center justify-center"> */}
           <Card className="border-0 shadow-xl bg-white/70 backdrop-blur-sm p-8">
             <div className="flex flex-col items-center space-y-4">
               <div className="relative">
@@ -191,7 +192,7 @@ export default function ResumeImprovementPage() {
 
   return (
     <ProtectedRoute allowedRoles={["candidate"]}>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
+      <div className="min-h-screen">
         <div className="container mx-auto py-8 px-4">
           {/* Header Section */}
           <div className="text-center mb-8">

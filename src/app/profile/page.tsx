@@ -73,7 +73,8 @@ export default function ProfilePage() {
 
   return (
     <ProtectedRoute allowedRoles={["candidate"]}>
-      <div className="min-h-screen border rounded-2xl bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40">
+      {/* <div className="min-h-screen border rounded-2xl bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40"> */}
+      <div className="min-h-screen">
         {/* Decorative background elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/10 to-indigo-400/10 rounded-full blur-3xl"></div>
