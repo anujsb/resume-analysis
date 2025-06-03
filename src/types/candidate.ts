@@ -16,7 +16,7 @@ export interface Candidate {
 // Add the missing SkillProficiency type
 export interface SkillProficiency {
   skill: string;
-  proficiency: string;
+  proficiency: "beginner" | "intermediate" | "advanced" | "expert";
 }
 
 export interface CandidateAnalysis {
