@@ -42,7 +42,7 @@ export const candidateNavigation = [
     description: "View and update profile"
   },
   {
-    title: "Resume Improvement",
+    title: "Improvement",
     href: "/resume-improvement",
     icon: HomeIcon,
     description: "Get suggestions to improve your resume"
