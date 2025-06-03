@@ -123,7 +123,7 @@ export default function CoverLetterPage() {
 
   return (
     <ProtectedRoute allowedRoles={["candidate"]}>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen border rounded-2xl bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="container mx-auto py-8 px-4">
           {/* Header Section */}
           <div className="text-center mb-8">
