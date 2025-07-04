@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CandidatesRepository } from '@/lib/repository/candidates-repository';
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest) {
   try {
-    const { id } = params;
+    // Extract the candidate ID from the URL
+    const url = new URL(request.url);
+    const id = url.pathname.split('/').filter(Boolean).pop();
+
     const body = await request.json();
     const { status, remark } = body;
 
